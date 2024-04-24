@@ -17,6 +17,10 @@ import ScrollList from '../../src/components/ScrollList';
 import ScrollList1 from '../../src/components/ScrollList1';
 import {green} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+// import {createDrawerNavigator} from '@react-navigation/drawer';
+
+// const Drawer = createDrawerNavigator();
 
 const HomeScreen = () => {
   return (
