@@ -1,14 +1,19 @@
 import * as React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 function ScreenA({navigation}) {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Go to About Screen</Text>
+      <Text style={styles.text}>
+        <FontAwesome5 icon="arrow-left" />
+        Go to About Screen
+      </Text>
+
       <TouchableOpacity
         onPress={() => {
           // console.log('ABCDEFG');
-          navigation.navigate('About');
+          navigation.navigate('Box1');
         }}
         style={styles.button}>
         <Text style={styles.buttonText}>Home Screen</Text>
@@ -36,10 +41,12 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: 'white',
     textAlign: 'center',
+    fontFamily: 'DancingScript-SemiBold',
   },
   text: {
     color: 'black',
     fontSize: 20,
+    fontFamily: 'Teko-Bold',
   },
 });
 

@@ -1,19 +1,19 @@
-// Box1.js
-
 import React from 'react';
-import {View, Text, StyleSheet, Image} from 'react-native';
+import {View, Text, StyleSheet, Image, TouchableOpacity} from 'react-native';
 
-const Box1 = ({title, imageSource}) => {
+const Box1 = ({title, imageSource, navigation}) => {
+  console.log('Props received by Box1:', title, imageSource, navigation); // Log props to check if navigation prop is passed correctly
   return (
-    <View style={styles.container}>
-      <View style={styles.container}>
+    <TouchableOpacity
+      onPress={() => navigation.navigate('ScreenA')} // Ensure navigation prop is used here
+      style={styles.container}>
+      <View style={styles.innerContainer}>
         <Image source={imageSource} style={styles.image} />
         <Text style={styles.title}>{title}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     width: 105,
@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderLeftColor: 'green',
   },
+  innerContainer: {
+    alignItems: 'center',
+  },
   title: {
     color: '#00004F',
     fontSize: 10,
@@ -39,7 +42,6 @@ const styles = StyleSheet.create({
   image: {
     width: 40,
     height: 40,
-    // marginBottom: 5,
   },
 });
 

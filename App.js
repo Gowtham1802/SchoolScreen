@@ -40,12 +40,12 @@ function App() {
         <Tab.Screen
           name="Home"
           component={ScreenA}
-          // options={{ tabBarBadge: 5 }}
+          options={{ tabBarBadge: 5 }}
         />
         <Tab.Screen
           name="About"
           component={ScreenB}
-          // options={{ tabBarBadge: 5 }}
+          options={{ tabBarBadge: 7 }}
         />
       </Tab.Navigator>
     </NavigationContainer>

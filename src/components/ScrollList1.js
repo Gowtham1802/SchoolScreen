@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import * as React from 'react';
 import {
   View,
   FlatList,
@@ -9,10 +9,14 @@ import {
   RefreshControl,
 } from 'react-native';
 import Box1 from '../../src/components/Box1';
-import ScrollList from './ScrollList';
+import ScreenA from '../../src/components/ScreenA';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 
-const ScrollList1 = () => {
-  const [refreshing, setRefreshing] = useState(false);
+const Stack = createStackNavigator();
+
+const ScrollList1 = ({navigation}) => {
+  const [refreshing, setRefreshing] = React.useState(false);
 
   const data = [
     {
@@ -115,33 +119,41 @@ const ScrollList1 = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={item => item.id}
-        numColumns={3}
-        showsVerticalScrollIndicator={false}
-        renderItem={({item}) => (
-          <Box1 title={item.title} imageSource={item.imageSource} />
-        )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
-
-      <View style={styles.box}>
-        <View>
-          <Text style={styles.title}>Start Online Class</Text>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.text}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-        <Image
-          source={require('../../assets/onlineclass.png')}
-          style={styles.image}
+    <NavigationContainer>
+      <View style={styles.container}>
+        <FlatList
+          data={data}
+          keyExtractor={item => item.id}
+          numColumns={3}
+          showsVerticalScrollIndicator={false}
+          renderItem={({item}) => (
+            <Box1
+              title={item.title}
+              imageSource={item.imageSource}
+              navigation={navigation} // Pass navigation prop to Box1
+            />
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
+
+        <View style={styles.box}>
+          <View>
+            <Text style={styles.title}>Start Online Class</Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ScreenA')} // Navigate to ScreenA
+              style={styles.button}>
+              <Text style={styles.text}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+          <Image
+            source={require('../../assets/onlineclass.png')}
+            style={styles.image}
+          />
+        </View>
       </View>
-    </View>
+    </NavigationContainer>
   );
 };
 
