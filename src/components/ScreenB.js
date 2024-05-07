@@ -4,13 +4,13 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 function ScreenB({navigation}) {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Go to Home Screen</Text>
+      <Text style={styles.text}>Other Screen Here !</Text>
       <TouchableOpacity
         onPress={() => {
           navigation.navigate('Home');
         }}
         style={styles.button}>
-        <Text style={styles.buttonText}>About Screen</Text>
+        <Text style={styles.buttonText}>Switch to Home</Text>
       </TouchableOpacity>
     </View>
   );

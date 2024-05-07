@@ -1,5 +1,3 @@
-// src/LoginScreen.js
-
 import React, {useState} from 'react';
 import {
   StyleSheet,
@@ -9,16 +7,23 @@ import {
   TouchableOpacity,
   ImageBackground,
 } from 'react-native';
-// import backgroundImage from '../assets/pexels-irina.jpg';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import ScreenA from './ScreenA';
+// import backgroundImage from '../../assets/pexels-irina.jpg';
 import backgroundImage from '../../assets/pexels-irina-iriser.jpg';
-// import backgroundImage from '../assets/pexels-irina-iriser-1.jpg';
-// import backgroundImage from '../assets/pexels-photo-3.jpg';
+// import backgroundImage from '../../assets/pexels-irina-iriser-1.jpg';
+// import backgroundImage from '../../assets/pexels-photo-3.jpg';
+
+const Stack = createStackNavigator();
 
 const LoginScreen = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const navigation = useNavigation();
 
   const handleSubmit = () => {
     if (isLogin) {
@@ -32,6 +37,7 @@ const LoginScreen = () => {
     // Handle login logic here
     console.log('Username:', username);
     console.log('Password:', password);
+    navigation.navigate('About');
   };
 
   const handleSignUp = () => {
@@ -39,12 +45,12 @@ const LoginScreen = () => {
     console.log('Username:', username);
     console.log('Password:', password);
     console.log('Confirm Password:', confirmPassword);
+    navigation.navigate('About');
   };
 
   return (
     <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
       <View style={styles.container}>
-        {/* <Text style={styles.titles}>Click Here To Register..!</Text> */}
         <Text style={styles.title}>{isLogin ? 'LogIn' : 'Sign Up'}</Text>
         <TextInput
           style={styles.input}
@@ -83,6 +89,26 @@ const LoginScreen = () => {
   );
 };
 
+// Define ScreenA component here
+
+const AppNavigator = () => {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{headerShown: false}}
+        />
+        {/* Define other screens here */}
+        <Stack.Screen name="About" component={ScreenA} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default AppNavigator;
+
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
@@ -95,12 +121,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
-  // titles: {
-  //   fontSize: 30,
-  //   fontWeight: 'bold',
-  //   color: 'white',
-  //   marginBottom: 10,
-  // },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
@@ -118,10 +138,7 @@ const styles = StyleSheet.create({
   button: {
     width: 300,
     height: 50,
-    // backgroundColor: '#004500',
     backgroundColor: '#D14FD1',
-    // backgroundColor: '#567',
-    // backgroundColor: '#F55',
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
@@ -140,5 +157,3 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 });
-
-export default LoginScreen;

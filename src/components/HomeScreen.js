@@ -18,8 +18,12 @@ import ScrollList1 from '../../src/components/ScrollList1';
 import {green} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
 // import {createDrawerNavigator} from '@react-navigation/drawer';
-
+import ScreenA from '../../src/components/ScreenA';
+import ScreenB from '../../src/components/ScreenB';
+// import Box1 from '../../src/components/Box1';
+const Stack = createStackNavigator();
 // const Drawer = createDrawerNavigator();
 
 const HomeScreen = () => {
@@ -55,7 +59,18 @@ const HomeScreen = () => {
         </View>
       </ImageBackground>
       <ScrollList />
-      <ScrollList1 />
+      {/* <ScrollList1 /> */}
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Home">
+          <Stack.Screen
+            name="Home"
+            component={ScrollList1}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen name="About" component={ScreenA} />
+          <Stack.Screen name="Other" component={ScreenB} />
+        </Stack.Navigator>
+      </NavigationContainer>
     </View>
   );
 };
@@ -66,8 +81,8 @@ const styles = StyleSheet.create({
   },
   body: {
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    // flexDirection: 'row',
+    // justifyContent: 'space-evenly',
   },
   image1: {
     width: 22,

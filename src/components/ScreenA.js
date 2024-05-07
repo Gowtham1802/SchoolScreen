@@ -1,22 +1,23 @@
 import * as React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import ScrollList1 from './ScrollList1';
 
 function ScreenA({navigation}) {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
         <FontAwesome5 icon="arrow-left" />
-        Go to About Screen
+        About Screen Here !
       </Text>
 
       <TouchableOpacity
         onPress={() => {
           // console.log('ABCDEFG');
-          navigation.navigate('Box1');
+          navigation.navigate('Home');
         }}
         style={styles.button}>
-        <Text style={styles.buttonText}>Home Screen</Text>
+        <Text style={styles.buttonText}>Switch to Home </Text>
       </TouchableOpacity>
     </View>
   );
