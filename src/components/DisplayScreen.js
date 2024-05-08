@@ -9,122 +9,68 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DisplayScreen = ({route}) => {
-  const {formData} = route.params;
+const DisplayScreen = () => {
   const navigation = useNavigation();
-  const [displayedData, setDisplayedData] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [savedData, setSavedData] = useState([]);
+
+  const handleEditField = () => {
+    navigation.navigate('FormScreen');
+  };
+
+  const handleDeleteField = () => {
+    // Implement deletion logic
+  };
 
   useEffect(() => {
-    setDisplayedData(formData);
-  }, [formData]);
+    fetchData();
+  }, []);
 
-  const removeData = async key => {
+  const fetchData = async (savedData) => {
     try {
-      await AsyncStorage.removeItem(key);
+      const value = await AsyncStorage.getItem(savedData);
+      const parsedData = data.map(value => JSON.parse(value));
+      setSavedData(parsedData);
     } catch (error) {
-      console.error('Error removing data:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
-  const handleEditField = field => {
-    navigation.navigate('FormScreen', {
-      fieldToEdit: field,
-      currentValue: displayedData[field] || '', // Pass empty string if field is undefined
+  const searchInData = () => {
+    const results = savedData.filter(item => {
+      return Object.values(item).some(value =>
+        value.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
     });
-  };
-
-  const handleDeleteField = field => {
-    const updatedData = {...displayedData, [field]: ''};
-    setDisplayedData(updatedData);
-    removeData('formData', displayedData);
-  };
-
-  const handleSearch = () => {
-    const results = [];
-    if (formData) {
-      if (formData.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-        results.push(formData.name);
-      }
-      if (
-        formData.selectedClass.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        results.push(formData.selectedClass);
-      }
-      if (formData.mobileNumber.includes(searchTerm)) {
-        results.push(formData.mobileNumber);
-      }
-    }
     setSearchResults(results);
   };
 
-  function generateRandomUserId(length) {
-    const characters = '0123456789';
-    let userId = '';
-    for (let i = 0; i < length; i++) {
-      userId += characters.charAt(
-        Math.floor(Math.random() * characters.length),
-      );
-    }
-    return userId;
-  }
+  const renderFields = () => {
+    const dataToRender = searchResults.length > 0 ? searchResults : savedData;
+    return formFields.map((field, index) => (
+      <View key={index} style={styles.fieldRow}>
+        <Text style={styles.fieldLabel}>{field.label}:</Text>
+        <Text style={styles.fieldValue}>
+          {/* Render corresponding value from saved data */}
+          {dataToRender.length > 0 ? dataToRender[0][field.key] : ''}
+        </Text>
+      </View>
+    ));
+  };
 
   const formFields = [
-    {
-      id: generateRandomUserId(5),
-      key: 'name',
-      label: 'Name',
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'selectedClass',
-      label: 'Selected Class',
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'dateOfBirth',
-      label: 'Date of Birth',
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'mobileNumber',
-      label: 'Mobile Number',
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'gender',
-      label: 'Gender',
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'fathersName',
-      label: "Father's Name",
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'fathersOccupation',
-      label: "Father's Occupation",
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'mothersName',
-
-      label: "Mother's Name",
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'mothersOccupation',
-      label: "Mother's Occupation",
-    },
-    {
-      id: generateRandomUserId(5),
-      key: 'address',
-      label: 'Address',
-    },
+    {key: 'name', label: 'Name'},
+    {key: 'selectedClass', label: 'Selected Class'},
+    {key: 'dateOfBirth', label: 'Date of Birth'},
+    {key: 'mobileNumber', label: 'Mobile Number'},
+    {key: 'gender', label: 'Gender'},
+    {key: 'fathersName', label: "Father's Name"},
+    {key: 'fathersOccupation', label: "Father's Occupation"},
+    {key: 'mothersName', label: "Mother's Name"},
+    {key: 'mothersOccupation', label: "Mother's Occupation"},
+    {key: 'address', label: 'Address'},
   ];
-
-  console.log(formFields);
 
   return (
     <View>
@@ -135,10 +81,8 @@ const DisplayScreen = ({route}) => {
             placeholder="Search"
             value={searchTerm}
             onChangeText={text => setSearchTerm(text)}
+            onEndEditing={searchInData}
           />
-          <TouchableOpacity onPress={handleSearch} style={styles.searchButton}>
-            <Text style={styles.searchButtonText}>Search</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.resultsContainer}>
           {searchResults.map((result, index) => (
@@ -149,26 +93,20 @@ const DisplayScreen = ({route}) => {
         </View>
       </View>
       <View style={styles.container}>
-        {formFields.map((field, index) => (
-          <View
-            key={index}
-            style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={{flex: 1, fontSize: 16}}>
-              {field.label}: {displayedData[field.key] || 'No value'}{' '}
-              {/* Show placeholder if no value */}
-            </Text>
-            <TouchableOpacity
-              onPress={() => handleEditField(field.key)}
-              style={styles.editButton}>
-              <Text style={styles.buttonText}>Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleDeleteField(field.key)}
-              style={styles.deleteButton}>
-              <Text style={styles.buttonText}>Delete</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+        <Text style={styles.title}>Student List</Text>
+        {renderFields()}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            onPress={handleEditField}
+            style={[styles.editDeleteButton, {backgroundColor: '#007bff'}]}>
+            <Text style={styles.buttonText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleDeleteField}
+            style={[styles.editDeleteButton, {backgroundColor: '#ff000d'}]}>
+            <Text style={styles.buttonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -176,30 +114,48 @@ const DisplayScreen = ({route}) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0ED2F7',
-    padding: 10,
+    backgroundColor: '#b5d8e3',
+    borderWidth: 10,
+    borderColor: '#fff',
+    padding: 15,
     gap: 10,
   },
-  editButton: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: '#007bff',
-    marginHorizontal: 5,
-    borderRadius: 5,
+  title: {
+    width: '100%',
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    backgroundColor: '#53a6be',
+    textAlign: 'center',
   },
-  deleteButton: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: '#ff000d',
-    marginHorizontal: 5,
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  fieldLabel: {
+    flex: 1,
+    fontSize: 16,
+  },
+  fieldValue: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  editDeleteButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
+    width: 100,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
   },
-  icon: {
-    color: 'white',
-    fontSize: 200,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
   container1: {
     backgroundColor: '#fff',
@@ -216,16 +172,6 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     paddingHorizontal: 10,
-  },
-  searchButton: {
-    marginLeft: 10,
-    backgroundColor: '#007bff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  searchButtonText: {
-    color: '#fff',
   },
   resultsContainer: {
     flex: 1,

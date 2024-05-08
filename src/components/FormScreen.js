@@ -2,19 +2,16 @@ import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
-  Button,
-  TextInput,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
-  DatePickerAndroid,
 } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import DisplayScreen from './DisplayScreen';
 import {Picker} from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const FormScreen = ({navigation}) => {
+const SavedData = []; // Move outside the component to maintain its state
+const FormScreen = ({navigation, route}) => {
   const [formData, setFormData] = useState({
     name: '',
     dateOfBirth: '',
@@ -24,24 +21,20 @@ const FormScreen = ({navigation}) => {
     mothersName: '',
     mothersOccupation: '',
     selectedClass: '',
-    gender: '',
+    selectedGender: '',
     address: '',
   });
 
-  useEffect(() => {
-    // Load data from AsyncStorage when component mounts
-    getData('formData').then(savedData => {
-      if (savedData) {
-        setFormData(savedData);
-      }
+  const handleInputChange = (field, value) => {
+    setFormData({
+      ...formData,
+      [field]: value,
     });
-  }, []);
+  };
 
-  // Function to handle validation
   const handleValidation = () => {
     const errors = {};
 
-    // Validation logic for each field
     if (!formData.name) {
       errors.name = 'Name is required';
     }
@@ -56,8 +49,8 @@ const FormScreen = ({navigation}) => {
       errors.mobileNumber = 'Mobile Number must be 10 digits';
     }
 
-    if (!formData.gender) {
-      errors.gender = 'Gender is required';
+    if (!formData.selectedGender) {
+      errors.selectedGender = 'Gender is required';
     }
 
     if (!formData.fathersName) {
@@ -79,37 +72,115 @@ const FormScreen = ({navigation}) => {
     if (!formData.address) {
       errors.address = 'Address is required';
     }
-    // Return errors object
+
     return errors;
   };
 
-  // Function to handle input change
-  const handleInputChange = (field, value) => {
-    setFormData({
-      ...formData,
-      [field]: value,
-    });
+  // FormScreen.js
+  // Assuming you have a function to save data to SavedData with an identifier
+
+  const saveDataToSavedData = async (id, data) => {
+    try {
+      await AsyncStorage.setItem(`SavedData_${id}`, JSON.stringify(data));
+      // Navigation code in some other component
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
   };
 
-  // Function to handle form submission
-  const handleSubmit = async () => {
-    // Validate the form
-    const errors = handleValidation();
+  // Call this function when saving data in FormScreen
+  // Pass a unique ID along with the data
 
-    // If there are errors, prevent form submission
+  // Assuming you have some way to generate a unique ID, like a timestamp
+  const uniqueId = Date.now().toString();
+  saveDataToSavedData(uniqueId, formData);
+
+  // Navigate to DisplayScreen with the uniqueId
+  navigation.navigate('Student List', {id: uniqueId});
+
+  // DisplayScreen.js
+  // Retrieve the ID from route.params
+  // const {id} = route.params;
+
+  // Use the ID to retrieve the data from SavedData
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const id = route.params?.id; // Use optional chaining
+        if (id) {
+          const data = await AsyncStorage.getItem(`SavedData_${id}`);
+          if (data !== null) {
+            setDisplayedData(JSON.parse(data));
+          }
+        } else {
+          console.log('No ID found in route params');
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+      navigation.navigate('Student List', {id: uniqueId});
+
+    };
+
+    fetchData();
+  }, [route.params?.id]); // Include route.params.id in the dependency array
+
+  function generateRandomUserId(length) {
+    const characters = '0123456789';
+    let userId = '';
+    for (let i = 0; i < length; i++) {
+      userId += characters.charAt(
+        Math.floor(Math.random() * characters.length),
+      );
+    }
+    return userId;
+  }
+
+  // With this setup, each time you navigate to DisplayScreen, it will fetch the corresponding data based on the provided ID and display it.
+
+  const handleSubmit = async () => {
+    const errors = handleValidation();
     if (Object.keys(errors).length > 0) {
       console.log('Validation errors:', errors);
-      return; // Don't proceed with form submission
+      return;
     }
 
-    // Save form data to AsyncStorage
-    await setData('formData', formData);
+    // Generate random user ID
+    const userId = generateRandomUserId(4);
 
-    // Navigate to the DisplayScreen and pass form data
+    // Create an object with form data and user ID
+    const userData = {
+      userId: userId,
+      formData: formData,
+    };
+
+    // Add the userData object to SavedData array
+    SavedData.push(userData);
+
+    // Log SavedData array to console
+    console.log('Saved Data:', SavedData);
+
+    // Save form data in AsyncStorage
+    await setData('formData', formData);
     navigation.navigate('Students List', {formData});
   };
 
-  // Function to save data to AsyncStorage
+  const handleDOBChange = text => {
+    // You can add more validation logic here if needed
+    setFormData({
+      ...formData,
+      dateOfBirth: text,
+    });
+  };
+
+  const handleMobileNumberChange = text => {
+    // You can add more validation logic here if needed
+    setFormData({
+      ...formData,
+      mobileNumber: text,
+    });
+  };
+
   const setData = async (key, value) => {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
@@ -119,7 +190,21 @@ const FormScreen = ({navigation}) => {
     }
   };
 
-  // Form fields array
+  const getData = async key => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      if (value !== null) {
+        return JSON.parse(value);
+      } else {
+        console.log('No data found for key:', key);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      return null;
+    }
+  };
+
   const formFields = [
     {
       label: 'Name:',
@@ -145,18 +230,6 @@ const FormScreen = ({navigation}) => {
         'Class 11',
         'Class 12',
       ],
-    },
-    {
-      label: 'Date of Birth:',
-      field: 'dateOfBirth',
-      type: 'input',
-      placeholder: 'Enter your date of birth (DD-MM-YYYY)',
-    },
-    {
-      label: 'Mobile Number:',
-      field: 'mobileNumber',
-      type: 'input',
-      placeholder: 'Enter your mobile number',
     },
     {
       label: 'Gender:',
@@ -196,30 +269,10 @@ const FormScreen = ({navigation}) => {
     },
   ];
 
-  // Function to load data from AsyncStorage
-  const getData = async key => {
-    try {
-      const value = await AsyncStorage.getItem(key);
-      console.log(' AsyncStorage', value);
-
-      if (value !== null) {
-        // Data found, parse and return
-        return JSON.parse(value);
-      } else {
-        console.log('No data found for key:', key);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-      return null;
-    }
-  };
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Create Account</Text>
       <View style={styles.formContainer}>
-        {/* Iterate over formFields array */}
         {formFields.map((field, index) => (
           <View key={index}>
             <Text style={styles.label}>{field.label}</Text>
@@ -266,28 +319,33 @@ const FormScreen = ({navigation}) => {
                 ))}
               </Picker>
             )}
-            {field.type === 'radio' && (
-              <View style={styles.gender}>
-                {field.options.map((option, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.radioButton,
-                      formData[field.field] === option &&
-                        styles.radioButtonSelected,
-                    ]}
-                    onPress={() => handleInputChange(field.field, option)}>
-                    <Text style={styles.radioText}>{option}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
           </View>
         ))}
-        {/* Submit button */}
-        <Button title="Submit" onPress={handleSubmit} />
-        <Button
-          title="Get Data"
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Date of Birth:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your DOB (DD-MM-YYYY)"
+            value={formData.dateOfBirth}
+            onChangeText={handleDOBChange}
+          />
+        </View>
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Mobile Number:</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your mobile number"
+            value={formData.mobileNumber}
+            onChangeText={handleMobileNumberChange}
+            keyboardType="numeric" // Ensure numeric keyboard on mobile devices
+          />
+        </View>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={[styles.button, {backgroundColor: '#53a6be'}]}>
+          <Text style={styles.buttonText}>Submit</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           onPress={async () => {
             const savedData = await getData('formData');
             if (savedData) {
@@ -295,48 +353,40 @@ const FormScreen = ({navigation}) => {
             }
             console.log(formData, 'formData');
           }}
-        />
+          style={[styles.button, {backgroundColor: '#53a6be'}]}>
+          <Text style={styles.buttonText}>Get Data</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'flex-start',
     alignItems: 'center',
-    backgroundColor: '#0ED2F7',
+    backgroundColor: '#b5d8e3',
     paddingBottom: 20,
   },
   formContainer: {
     width: '80%',
     gap: 5,
-    // alignItems: 'center',
   },
   title: {
     width: '100%',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#53a6be',
     textAlign: 'center',
   },
   label: {
     fontSize: 18,
     fontWeight: 'bold',
-    // marginTop: 10,
-  },
-  label1: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 15,
-    // alignItems: 'center',
   },
   input: {
     width: '100%',
-    // height: 40,
     marginBottom: 10,
     paddingHorizontal: 10,
     backgroundColor: '#fff',
@@ -345,6 +395,16 @@ const styles = StyleSheet.create({
   textArea: {
     height: 100,
     textAlignVertical: 'top',
+  },
+  button: {
+    backgroundColor: '#53a6be',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 3,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
   },
 });
 

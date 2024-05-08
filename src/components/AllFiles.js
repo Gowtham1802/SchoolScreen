@@ -1936,305 +1936,553 @@ import ScrollList from "./ScrollList";
 
 // Full FormScreen Codes Here !
 
-import React, {useState} from 'react';
+// import React, {useState} from 'react';
+// import {
+//   StyleSheet,
+//   View,
+//   Button,
+//   TextInput,
+//   Text,
+//   TouchableOpacity,
+//   ScrollView,
+//   DatePickerAndroid,
+// } from 'react-native';
+// import {NavigationContainer} from '@react-navigation/native';
+// import DisplayScreen from './DisplayScreen';
+// import {Picker} from '@react-native-picker/picker';
+// 
+// const FormScreen = ({navigation}) => {
+//   const [formData, setFormData] = useState({
+//     name: '',
+//     dateOfBirth: '',
+//     mobileNumber: '',
+//     fathersName: '',
+//     fathersOccupation: '',
+//     mothersName: '',
+//     mothersOccupation: '',
+//     selectedClass: '',
+//     gender: '',
+//     address: '',
+//   });
+// 
+//   // Function to handle validation
+//   const handleValidation = () => {
+//     const errors = {};
+// 
+//     // Validation logic for each field
+//     if (!formData.name) {
+//       errors.name = 'Name is required';
+//     }
+// 
+//     if (!formData.dateOfBirth) {
+//       errors.dateOfBirth = 'Date of Birth is required';
+//     }
+// 
+//     if (!formData.mobileNumber) {
+//       errors.mobileNumber = 'Mobile Number is required';
+//     } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+//       errors.mobileNumber = 'Mobile Number must be 10 digits';
+//     }
+// 
+//     if (!formData.gender) {
+//       errors.gender = 'Gender is required';
+//     }
+// 
+//     if (!formData.fathersName) {
+//       errors.fathersName = "Father's Name is required";
+//     }
+// 
+//     if (!formData.fathersOccupation) {
+//       errors.fathersOccupation = "Father's Occupation is required";
+//     }
+// 
+//     if (!formData.mothersName) {
+//       errors.mothersName = "Mother's Name is required";
+//     }
+// 
+//     if (!formData.mothersOccupation) {
+//       errors.mothersOccupation = "Mother's Occupation is required";
+//     }
+// 
+//     if (!formData.address) {
+//       errors.address = 'Address is required';
+//     }
+// 
+//     // Return errors object
+//     return errors;
+//   };
+// 
+//   // Function to handle input change
+//   const handleInputChange = (field, value) => {
+//     setFormData({
+//       ...formData,
+//       [field]: value,
+//     });
+//   };
+// 
+//   const showDatePicker = async () => {
+//     try {
+//       const {action, year, month, day} = await DatePickerAndroid.open({
+//         date: new Date(), // Set default date if needed
+//         mode: 'spinner', // Choose between 'calendar' or 'spinner' mode
+//       });
+//       if (action !== DatePickerAndroid.dismissedAction) {
+//         // Selected date
+//         const selectedDate = new Date(year, month, day);
+//         const formattedDate = `${selectedDate.getDate()}/${
+//           selectedDate.getMonth() + 1
+//         }/${selectedDate.getFullYear()}`;
+//         handleInputChange('dateOfBirth', formattedDate);
+//       }
+//     } catch ({code, message}) {
+//       console.warn('Cannot open date picker', message);
+//     }
+//   };
+// 
+//   // Function to handle form submission
+//   const handleSubmit = () => {
+//     // Validate the form
+//     const errors = handleValidation();
+// 
+//     // If there are errors, prevent form submission
+//     if (Object.keys(errors).length > 0) {
+//       console.log('Validation errors:', errors);
+//       return; // Don't proceed with form submission
+//     }
+// 
+//     // Navigate to the DisplayScreen and pass form data
+//     navigation.navigate('DisplayScreen', {formData});
+//   };
+// 
+//   return (
+//     <ScrollView contentContainerStyle={styles.container}>
+//       <Text style={styles.title}>Create Account</Text>
+//       <View style={styles.formContainer}>
+//         {/* Form inputs */}
+//         {/* Name */}
+//         <Text style={styles.label}>Name:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your name"
+//           value={formData.name}
+//           onChangeText={text => handleInputChange('name', text)}
+//         />
+//         <Text style={styles.label}>Class:</Text>
+//         <Picker
+//           selectedValue={formData.selectedClass}
+//           style={styles.input}
+//           onValueChange={itemValue =>
+//             handleInputChange('selectedClass', itemValue)
+//           }>
+//           <Picker.Item label="Select Class" value="" />
+//           <Picker.Item label="Class 1" value="Class 1" />
+//           <Picker.Item label="Class 2" value="Class 2" />
+//           <Picker.Item label="Class 3" value="Class 3" />
+//           <Picker.Item label="Class 4" value="Class 4" />
+//           <Picker.Item label="Class 5" value="Class 5" />
+//           <Picker.Item label="Class 6" value="Class 6" />
+//           <Picker.Item label="Class 7" value="Class 7" />
+//           <Picker.Item label="Class 8" value="Class 8" />
+//           <Picker.Item label="Class 9" value="Class 9" />
+//           <Picker.Item label="Class 10" value="Class 10" />
+//           <Picker.Item label="Class 11" value="Class 11" />
+//           <Picker.Item label="Class 12" value="Class 12" />
+//           {/* Add more items as needed */}
+//         </Picker>
+//         {/* Date of Birth */}
+//         <Text style={styles.label}>Date of Birth:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your date of birth"
+//           value={formData.dateOfBirth}
+//           onChangeText={text => handleInputChange('dateOfBirth', text)}
+//         />
+//         {/* Mobile Number */}
+//         <Text style={styles.label}>Mobile Number:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your mobile number"
+//           value={formData.mobileNumber}
+//           onChangeText={text => handleInputChange('mobileNumber', text)}
+//         />
+//         {/* Gender */}
+//         <View style={styles.gender}>
+//           <Text style={styles.label1}>Gender:</Text>
+//           <TouchableOpacity
+//             style={[
+//               styles.radioButton,
+//               formData.gender === 'male' && styles.radioButtonSelected,
+//             ]}
+//             onPress={() => handleInputChange('gender', 'male')}>
+//             <Text style={styles.radioText}>Male</Text>
+//           </TouchableOpacity>
+//           <TouchableOpacity
+//             style={[
+//               styles.radioButton,
+//               formData.gender === 'female' && styles.radioButtonSelected,
+//             ]}
+//             onPress={() => handleInputChange('gender', 'female')}>
+//             <Text style={styles.radioText}>Female</Text>
+//           </TouchableOpacity>
+//         </View>
+// 
+//         {/* Father's Name */}
+//         <Text style={styles.label}>Father's Name:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your father's name"
+//           value={formData.fathersName}
+//           onChangeText={text => handleInputChange('fathersName', text)}
+//         />
+//         {/* Father's Occupation */}
+//         <Text style={styles.label}>Father's Occupation:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your father's occupation"
+//           value={formData.fathersOccupation}
+//           onChangeText={text => handleInputChange('fathersOccupation', text)}
+//         />
+//         {/* Mother's Name */}
+//         <Text style={styles.label}>Mother's Name:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your mother's name"
+//           value={formData.mothersName}
+//           onChangeText={text => handleInputChange('mothersName', text)}
+//         />
+//         {/* Mother's Occupation */}
+//         <Text style={styles.label}>Mother's Occupation:</Text>
+//         <TextInput
+//           style={styles.input}
+//           placeholder="Enter your mother's occupation"
+//           value={formData.mothersOccupation}
+//           onChangeText={text => handleInputChange('mothersOccupation', text)}
+//         />
+//         {/* Address */}
+//         <Text style={styles.label}>Address:</Text>
+//         <TextInput
+//           style={[styles.input, styles.textArea]}
+//           placeholder="Enter your address"
+//           multiline
+//           value={formData.address}
+//           onChangeText={text => handleInputChange('address', text)}
+//         />
+//         {/* Submit button */}
+//         <Button title="Submit" onPress={handleSubmit} />
+//       </View>
+//     </ScrollView>
+//   );
+// };
+// 
+// // Styles
+// const styles = StyleSheet.create({
+//   container: {
+//     flexGrow: 1,
+//     justifyContent: 'flex-start',
+//     alignItems: 'center',
+//     backgroundColor: '#0ED2F7',
+//     paddingBottom: 25,
+//   },
+//   formContainer: {
+//     width: '80%',
+//     gap: 5,
+//     // alignItems: 'center',
+//   },
+//   title: {
+//     fontSize: 24,
+//     fontWeight: 'bold',
+//     marginBottom: 20,
+//   },
+//   label: {
+//     fontSize: 18,
+//     fontWeight: 'bold',
+//     marginTop: 10,
+//   },
+//   label1: {
+//     fontSize: 18,
+//     fontWeight: 'bold',
+//     marginTop: 15,
+//     // alignItems: 'center',
+//   },
+//   input: {
+//     width: '100%',
+//     height: 40,
+//     marginBottom: 10,
+//     paddingHorizontal: 10,
+//     backgroundColor: '#fff',
+//     borderRadius: 5,
+//   },
+//   textArea: {
+//     height: 100,
+//     textAlignVertical: 'top',
+//   },
+//   radioButton: {
+//     borderWidth: 1,
+//     borderColor: '#000',
+//     borderRadius: 10,
+//     padding: 8,
+//     marginVertical: 10,
+//     marginRight: 10,
+//   },
+//   gender: {
+//     flexDirection: 'row',
+//     justifyContent: 'flex-start',
+//     gap: 5,
+//   },
+//   radioButtonSelected: {
+//     backgroundColor: '#0ED2F7',
+//   },
+//   radioText: {
+//     fontWeight: 'bold',
+//   },
+// });
+// 
+// export default FormScreen;
+
+
+
+
+
+import React, {useState, useEffect} from 'react';
 import {
   StyleSheet,
   View,
-  Button,
-  TextInput,
   Text,
+  TextInput,
   TouchableOpacity,
-  ScrollView,
-  DatePickerAndroid,
 } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import DisplayScreen from './DisplayScreen';
-import {Picker} from '@react-native-picker/picker';
+import {useNavigation} from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const FormScreen = ({navigation}) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    dateOfBirth: '',
-    mobileNumber: '',
-    fathersName: '',
-    fathersOccupation: '',
-    mothersName: '',
-    mothersOccupation: '',
-    selectedClass: '',
-    gender: '',
-    address: '',
-  });
+const DisplayScreen = ({route}) => {
+  const {formData} = route.params;
+  const navigation = useNavigation();
+  const [displayedData, setDisplayedData] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
-  // Function to handle validation
-  const handleValidation = () => {
-    const errors = {};
+  useEffect(() => {
+    setDisplayedData(formData);
+  }, [formData]);
 
-    // Validation logic for each field
-    if (!formData.name) {
-      errors.name = 'Name is required';
-    }
-
-    if (!formData.dateOfBirth) {
-      errors.dateOfBirth = 'Date of Birth is required';
-    }
-
-    if (!formData.mobileNumber) {
-      errors.mobileNumber = 'Mobile Number is required';
-    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
-      errors.mobileNumber = 'Mobile Number must be 10 digits';
-    }
-
-    if (!formData.gender) {
-      errors.gender = 'Gender is required';
-    }
-
-    if (!formData.fathersName) {
-      errors.fathersName = "Father's Name is required";
-    }
-
-    if (!formData.fathersOccupation) {
-      errors.fathersOccupation = "Father's Occupation is required";
-    }
-
-    if (!formData.mothersName) {
-      errors.mothersName = "Mother's Name is required";
-    }
-
-    if (!formData.mothersOccupation) {
-      errors.mothersOccupation = "Mother's Occupation is required";
-    }
-
-    if (!formData.address) {
-      errors.address = 'Address is required';
-    }
-
-    // Return errors object
-    return errors;
-  };
-
-  // Function to handle input change
-  const handleInputChange = (field, value) => {
-    setFormData({
-      ...formData,
-      [field]: value,
-    });
-  };
-
-  const showDatePicker = async () => {
+  const removeData = async () => {
     try {
-      const {action, year, month, day} = await DatePickerAndroid.open({
-        date: new Date(), // Set default date if needed
-        mode: 'spinner', // Choose between 'calendar' or 'spinner' mode
-      });
-      if (action !== DatePickerAndroid.dismissedAction) {
-        // Selected date
-        const selectedDate = new Date(year, month, day);
-        const formattedDate = `${selectedDate.getDate()}/${
-          selectedDate.getMonth() + 1
-        }/${selectedDate.getFullYear()}`;
-        handleInputChange('dateOfBirth', formattedDate);
+      // Implement the logic to delete all the values
+      // For example, you can iterate through formFields and remove each value
+      // Here I assume formFields is an array containing keys for AsyncStorage
+      const keys = formFields.map(field => field.key);
+      await AsyncStorage.multiRemove(keys);
+    } catch (error) {
+      console.error('Error removing data:', error);
+    }
+  };
+
+  const handleEditField = () => {
+    // Navigate to the FormScreen page
+    navigation.navigate('FormScreen');
+  };
+
+  const handleDeleteField = () => {
+    // Call the removeData function to delete all the values
+    removeData();
+  };
+
+  const handleSearch = () => {
+    const results = [];
+    if (formData) {
+      if (formData.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+        results.push(formData.name);
       }
-    } catch ({code, message}) {
-      console.warn('Cannot open date picker', message);
+      if (
+        formData.selectedClass.toLowerCase().includes(searchTerm.toLowerCase())
+      ) {
+        results.push(formData.selectedClass);
+      }
+      if (formData.mobileNumber.includes(searchTerm)) {
+        results.push(formData.mobileNumber);
+      }
     }
+    setSearchResults(results);
   };
 
-  // Function to handle form submission
-  const handleSubmit = () => {
-    // Validate the form
-    const errors = handleValidation();
-
-    // If there are errors, prevent form submission
-    if (Object.keys(errors).length > 0) {
-      console.log('Validation errors:', errors);
-      return; // Don't proceed with form submission
+  function generateRandomUserId(length) {
+    const characters = '0123456789';
+    let userId = '';
+    for (let i = 0; i < length; i++) {
+      userId += characters.charAt(
+        Math.floor(Math.random() * characters.length),
+      );
     }
+    return userId;
+  }
 
-    // Navigate to the DisplayScreen and pass form data
-    navigation.navigate('DisplayScreen', {formData});
-  };
+  const formFields = [
+    {
+      id: generateRandomUserId(5),
+      key: 'name',
+      label: 'Name',
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'selectedClass',
+      label: 'Selected Class',
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'dateOfBirth',
+      label: 'Date of Birth',
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'mobileNumber',
+      label: 'Mobile Number',
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'gender',
+      label: 'Gender',
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'fathersName',
+      label: "Father's Name",
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'fathersOccupation',
+      label: "Father's Occupation",
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'mothersName',
+      label: "Mother's Name",
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'mothersOccupation',
+      label: "Mother's Occupation",
+    },
+    {
+      id: generateRandomUserId(5),
+      key: 'address',
+      label: 'Address',
+    },
+  ];
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <View style={styles.formContainer}>
-        {/* Form inputs */}
-        {/* Name */}
-        <Text style={styles.label}>Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your name"
-          value={formData.name}
-          onChangeText={text => handleInputChange('name', text)}
-        />
-        <Text style={styles.label}>Class:</Text>
-        <Picker
-          selectedValue={formData.selectedClass}
-          style={styles.input}
-          onValueChange={itemValue =>
-            handleInputChange('selectedClass', itemValue)
-          }>
-          <Picker.Item label="Select Class" value="" />
-          <Picker.Item label="Class 1" value="Class 1" />
-          <Picker.Item label="Class 2" value="Class 2" />
-          <Picker.Item label="Class 3" value="Class 3" />
-          <Picker.Item label="Class 4" value="Class 4" />
-          <Picker.Item label="Class 5" value="Class 5" />
-          <Picker.Item label="Class 6" value="Class 6" />
-          <Picker.Item label="Class 7" value="Class 7" />
-          <Picker.Item label="Class 8" value="Class 8" />
-          <Picker.Item label="Class 9" value="Class 9" />
-          <Picker.Item label="Class 10" value="Class 10" />
-          <Picker.Item label="Class 11" value="Class 11" />
-          <Picker.Item label="Class 12" value="Class 12" />
-          {/* Add more items as needed */}
-        </Picker>
-        {/* Date of Birth */}
-        <Text style={styles.label}>Date of Birth:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your date of birth"
-          value={formData.dateOfBirth}
-          onChangeText={text => handleInputChange('dateOfBirth', text)}
-        />
-        {/* Mobile Number */}
-        <Text style={styles.label}>Mobile Number:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your mobile number"
-          value={formData.mobileNumber}
-          onChangeText={text => handleInputChange('mobileNumber', text)}
-        />
-        {/* Gender */}
-        <View style={styles.gender}>
-          <Text style={styles.label1}>Gender:</Text>
+    <View>
+      <View style={styles.container1}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            value={searchTerm}
+            onChangeText={text => setSearchTerm(text)}
+          />
+          
+        </View>
+        <View style={styles.resultsContainer}>
+          {searchResults.map((result, index) => (
+            <Text key={index} style={styles.resultText}>
+              {result}
+            </Text>
+          ))}
+        </View>
+      </View>
+      <View style={styles.container}>
+        <Text style={styles.title}>Student List 1</Text>
+        {formFields.map((field, index) => (
+          <View
+            key={index}
+            style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text style={{flex: 1, fontSize: 20}}>
+              {field.label}: {displayedData[field.key] || 'No value'}{' '}
+              {/* Show placeholder if no value */}
+            </Text>
+          </View>
+        ))}
+        <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[
-              styles.radioButton,
-              formData.gender === 'male' && styles.radioButtonSelected,
-            ]}
-            onPress={() => handleInputChange('gender', 'male')}>
-            <Text style={styles.radioText}>Male</Text>
+            onPress={handleEditField}
+            style={[styles.editDeleteButton, {backgroundColor: '#007bff'}]}>
+            <Text style={styles.buttonText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[
-              styles.radioButton,
-              formData.gender === 'female' && styles.radioButtonSelected,
-            ]}
-            onPress={() => handleInputChange('gender', 'female')}>
-            <Text style={styles.radioText}>Female</Text>
+            onPress={handleDeleteField}
+            style={[styles.editDeleteButton, {backgroundColor: '#ff000d'}]}>
+            <Text style={styles.buttonText}>Delete</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Father's Name */}
-        <Text style={styles.label}>Father's Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your father's name"
-          value={formData.fathersName}
-          onChangeText={text => handleInputChange('fathersName', text)}
-        />
-        {/* Father's Occupation */}
-        <Text style={styles.label}>Father's Occupation:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your father's occupation"
-          value={formData.fathersOccupation}
-          onChangeText={text => handleInputChange('fathersOccupation', text)}
-        />
-        {/* Mother's Name */}
-        <Text style={styles.label}>Mother's Name:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your mother's name"
-          value={formData.mothersName}
-          onChangeText={text => handleInputChange('mothersName', text)}
-        />
-        {/* Mother's Occupation */}
-        <Text style={styles.label}>Mother's Occupation:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your mother's occupation"
-          value={formData.mothersOccupation}
-          onChangeText={text => handleInputChange('mothersOccupation', text)}
-        />
-        {/* Address */}
-        <Text style={styles.label}>Address:</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Enter your address"
-          multiline
-          value={formData.address}
-          onChangeText={text => handleInputChange('address', text)}
-        />
-        {/* Submit button */}
-        <Button title="Submit" onPress={handleSubmit} />
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    backgroundColor: '#0ED2F7',
-    paddingBottom: 25,
-  },
-  formContainer: {
-    width: '80%',
-    gap: 5,
-    // alignItems: 'center',
+    backgroundColor: '#b5d8e3',
+    // backgroundColor: '#55555555',
+    borderWidth: 10,
+    borderColor: '#fff',
+    padding: 15,
+    gap: 10,
   },
   title: {
+    width: '100%',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    backgroundColor: '#53a6be',
+    textAlign: 'center',
   },
-  label: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  editDeleteButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    width: 100,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 10,
   },
-  label1: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 15,
-    // alignItems: 'center',
-  },
-  input: {
-    width: '100%',
-    height: 40,
-    marginBottom: 10,
-    paddingHorizontal: 10,
+  container1: {
     backgroundColor: '#fff',
+    padding: 10,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+  },
+  searchButton: {
+    marginLeft: 10,
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     borderRadius: 5,
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
+  searchButtonText: {
+    color: '#fff',
   },
-  radioButton: {
-    borderWidth: 1,
-    borderColor: '#000',
-    borderRadius: 10,
-    padding: 8,
-    marginVertical: 10,
-    marginRight: 10,
+  resultsContainer: {
+    flex: 1,
   },
-  gender: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 5,
-  },
-  radioButtonSelected: {
-    backgroundColor: '#0ED2F7',
-  },
-  radioText: {
-    fontWeight: 'bold',
+  resultText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
 });
 
-export default FormScreen;
+export default DisplayScreen;
