@@ -1,7 +1,13 @@
-// FormDataScreen.js
-
 import React, {useEffect, useState} from 'react';
-import {View, Text, FlatList, TextInput, Button, Alert} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FormDataScreen = ({navigation}) => {
@@ -67,12 +73,7 @@ const FormDataScreen = ({navigation}) => {
     const filtered = studentData.filter(student => {
       return (
         student.name.toLowerCase().includes(query.toLowerCase()) ||
-        // student.dateOfBirth.toLowerCase().includes(query.toLowerCase()) ||
         student.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
-        // student.fathersName.toLowerCase().includes(query.toLowerCase()) ||
-        // student.fathersOccupation.toLowerCase().includes(query.toLowerCase()) ||
-        // student.mothersName.toLowerCase().includes(query.toLowerCase()) ||
-        // student.mothersOccupation.toLowerCase().includes(query.toLowerCase()) ||
         student.selectedClass.toLowerCase().includes(query.toLowerCase())
       );
     });
@@ -80,15 +81,9 @@ const FormDataScreen = ({navigation}) => {
   };
 
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+    <View style={styles.container}>
       <TextInput
-        style={{
-          height: 40,
-          borderColor: 'gray',
-          borderWidth: 1,
-          margin: 10,
-          padding: 5,
-        }}
+        style={styles.input}
         placeholder="Search"
         onChangeText={handleSearch}
         value={searchQuery}
@@ -98,20 +93,24 @@ const FormDataScreen = ({navigation}) => {
           data={filteredData}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({item, index}) => (
-            <View>
-              <Text>Name: {item.name}</Text>
-              <Text>Date of Birth: {item.dateOfBirth}</Text>
-              <Text>Mobile Number: {item.mobileNumber}</Text>
-              <Text>Father's Name: {item.fathersName}</Text>
-              <Text>Father's Occupation: {item.fathersOccupation}</Text>
-              <Text>Mother's Name: {item.mothersName}</Text>
-              <Text>Mother's Occupation: {item.mothersOccupation}</Text>
-              <Text>Selected Class: {item.selectedClass}</Text>
-              <Text>Selected Gender: {item.selectedGender}</Text>
-              <Text>Address: {item.address}</Text>
-              <Button title="Edit" onPress={() => handleEdit(index)} />
-              <Button title="Delete" onPress={() => handleDelete(index)} />
-              <Text>------------</Text>
+            <View style={styles.itemContainer}>
+              <Text style={styles.label}>Name: {item.name}</Text>
+              <Text style={styles.label}>Class: {item.selectedClass}</Text>
+              <Text style={styles.label}>
+                Mobile Number: {item.mobileNumber}
+              </Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleEdit(index)}>
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button1}
+                  onPress={() => handleDelete(index)}>
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         />
@@ -121,5 +120,55 @@ const FormDataScreen = ({navigation}) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  itemContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%', // Adjust width as needed
+  },
+  button1: {
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%', // Adjust width as needed
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
 
 export default FormDataScreen;

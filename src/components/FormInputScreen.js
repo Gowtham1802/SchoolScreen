@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
+import DatePicker from 'react-native-datepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the generateRandomUserId function
@@ -26,9 +27,8 @@ function generateRandomUserId(length) {
 const FormInputScreen = ({navigation, route}) => {
   const [formData, setFormData] = useState({
     // Add a userId field to the form data
-
     name: '',
-    dateOfBirth: '',
+    dateOfBirth: new Date(),
     mobileNumber: '',
     fathersName: '',
     fathersOccupation: '',
@@ -200,11 +200,11 @@ const FormInputScreen = ({navigation, route}) => {
             marginBottom: 20,
             backgroundColor: '#53a6be',
             textAlign: 'center',
-            borderRadius: 15,
+            // borderRadius: 15,
             padding: 10,
             width: '100%',
           }}>
-          Enter your details:
+          Enter Your Details
         </Text>
         <TextInput
           style={styles.input}
@@ -214,16 +214,24 @@ const FormInputScreen = ({navigation, route}) => {
         />
         <TextInput
           style={styles.input}
-          placeholder="Date of Birth"
+          placeholder="Date of Birth (DD-MM-YYYY)"
           onChangeText={text => handleChange('dateOfBirth', text)}
           value={formData.dateOfBirth}
+          keyboardType="numeric"
         />
         <TextInput
           style={styles.input}
           placeholder="Mobile Number"
-          onChangeText={text => handleChange('mobileNumber', text)}
-          value={formData.mobileNumber}
-          keyboardType="numeric" // Numeric keyboard
+          onChangeText={text => {
+            // Remove any non-numeric characters from the input
+            const numericValue = text.replace(/\D/g, '');
+            // Check if the input contains 10 digits or less
+            if (numericValue.length <= 10) {
+              // Update the mobileNumber state with the sanitized value
+              handleChange('mobileNumber', numericValue);
+            }
+          }}
+          value={formData.mobileNumber} // Numeric keyboard
         />
         <TextInput
           style={styles.input}
@@ -256,19 +264,20 @@ const FormInputScreen = ({navigation, route}) => {
             handleChange('selectedClass', itemValue)
           }>
           <Picker.Item label="Select a Class" value="" />
-          <Picker.Item label="LKG" value="Class 1" />
-          <Picker.Item label="UKG" value="Class 2" />
-          <Picker.Item label="1st standard" value="Class 3" />
-          <Picker.Item label="2nd standard" value="Class 4" />
-          <Picker.Item label="3rd standard" value="Class 5" />
-          <Picker.Item label="4th standard" value="Class 6" />
-          <Picker.Item label="5th standard" value="Class 7" />
-          <Picker.Item label="6th standard" value="Class 8" />
-          <Picker.Item label="7th standard" value="Class 9" />
-          <Picker.Item label="9th standard" value="Class 10" />
-          <Picker.Item label="10th standard" value="Class 11" />
-          <Picker.Item label="11th standard" value="Class 12" />
-          <Picker.Item label="12th standard" value="Class 13" />
+          <Picker.Item label="LKG" value="LKG" />
+          <Picker.Item label="UKG" value="UKG" />
+          <Picker.Item label="1st standard" value="1st standard" />
+          <Picker.Item label="2nd standard" value="2nd standard" />
+          <Picker.Item label="3rd standard" value="3rd standard" />
+          <Picker.Item label="4th standard" value="4th standard" />
+          <Picker.Item label="5th standard" value="5th standard" />
+          <Picker.Item label="6th standard" value="6th standard" />
+          <Picker.Item label="7th standard" value="7th standard" />
+          <Picker.Item label="8th standard" value="8th standard" />
+          <Picker.Item label="9th standard" value="9th standard" />
+          <Picker.Item label="10th standard" value="10th standard" />
+          <Picker.Item label="11th standard" value="11th standard" />
+          <Picker.Item label="12th standard" value="12th standard" />
           {/* Add more class options as needed */}
         </Picker>
         <Picker
@@ -308,20 +317,21 @@ const FormInputScreen = ({navigation, route}) => {
 };
 const styles = StyleSheet.create({
   input: {
-    height: 40,
-    borderWidth: 1,
+    height: 60,
+    // borderWidth: 1,
     marginVertical: 10,
     padding: 5,
     width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 5,
+    // borderRadius: 5,
+    // textAlignVertical: 'top',
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
   buttonContainer: {
-    marginBottom: 30,
+    // marginBottom: 10,
   },
   button: {
     backgroundColor: '#53a6be',
@@ -330,7 +340,6 @@ const styles = StyleSheet.create({
     marginVertical: 3,
     alignItems: 'center',
     width: 250, // Adjust width as needed
-    
   },
   buttonText: {
     color: '#fff',
