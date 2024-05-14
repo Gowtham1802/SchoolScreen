@@ -6,6 +6,8 @@ import FormScreen from './src/components/FormScreen';
 import DisplayScreen from './src/components/DisplayScreen';
 import FormInputScreen from './src/components/FormInputScreen';
 import FormDataScreen from './src/components/FormDataScreen';
+import DataFilterScreen from './src/components/DataFilterScreen';
+import StudentDetailsScreen from './src/components/StudentDetailsScreen';
 import {TouchableOpacity, Text} from 'react-native';
 
 const Stack = createStackNavigator();
@@ -42,15 +44,15 @@ const App = () => {
     // </NavigationContainer>
 
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Students List">
+      <Stack.Navigator initialRouteName="DataFilterScreen">
         <Stack.Screen
           name="FormInputScreen"
           component={FormInputScreen}
           options={{headerShown: false}}
         />
         <Stack.Screen
-          name="FormDataScreen"
-          component={FormDataScreen}
+          name="DataFilterScreen"
+          component={DataFilterScreen}
           options={({navigation}) => ({
             headerShown: true,
             headerRight: () => (
@@ -61,12 +63,22 @@ const App = () => {
                   padding: 8,
                   borderRadius: 5,
                 }}
-                onPress={() => navigation.navigate('FormInputScreen')}>
+                onPress={() => navigation.navigate('FormInputScreen' + '')}>
                 <Text style={{color: 'white'}}>Add New</Text>
               </TouchableOpacity>
             ),
           })}
         />
+        <Stack.Screen
+          name="FormDataScreen"
+          component={FormDataScreen}
+          options={{headerShown: false}}
+        />
+        {/* <Stack.Screen
+          name="StudentDetailsScreen"
+          component={StudentDetailsScreen}
+          options={{headerShown: false}}
+        /> */}
       </Stack.Navigator>
     </NavigationContainer>
   );

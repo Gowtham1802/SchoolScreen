@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FormDataScreen = ({navigation}) => {
-  const [studentData, setStudentData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
+
+  // Use useRef to create a mutable object for studentData
+  const studentDataRef = useRef([]);
 
   useEffect(() => {
     loadStudentData();
@@ -24,7 +26,7 @@ const FormDataScreen = ({navigation}) => {
       const storedStudentData = await AsyncStorage.getItem('studentData');
       if (storedStudentData !== null) {
         const parsedStudentData = JSON.parse(storedStudentData);
-        setStudentData(parsedStudentData);
+        studentDataRef.current = parsedStudentData;
         setFilteredData(parsedStudentData);
       }
     } catch (error) {
@@ -35,7 +37,7 @@ const FormDataScreen = ({navigation}) => {
   const handleEdit = index => {
     navigation.navigate('FormInputScreen', {
       studentIndex: index,
-      studentData: studentData[index],
+      studentData: studentDataRef.current[index],
     });
   };
 
@@ -59,9 +61,9 @@ const FormDataScreen = ({navigation}) => {
 
   const deleteEntry = async index => {
     try {
-      const updatedData = studentData.filter((_, i) => i !== index);
+      const updatedData = studentDataRef.current.filter((_, i) => i !== index);
       await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
-      setStudentData(updatedData);
+      studentDataRef.current = updatedData;
       setFilteredData(updatedData);
     } catch (error) {
       console.error('Error deleting entry: ', error);
@@ -70,7 +72,7 @@ const FormDataScreen = ({navigation}) => {
 
   const handleSearch = query => {
     setSearchQuery(query);
-    const filtered = studentData.filter(student => {
+    const filtered = studentDataRef.current.filter(student => {
       return (
         student.name.toLowerCase().includes(query.toLowerCase()) ||
         student.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
@@ -94,23 +96,43 @@ const FormDataScreen = ({navigation}) => {
           keyExtractor={(item, index) => index.toString()}
           renderItem={({item, index}) => (
             <View style={styles.itemContainer}>
+              <Text style={styles.title}>Student List</Text>
               <Text style={styles.label}>Name: {item.name}</Text>
-              <Text style={styles.label}>Class: {item.selectedClass}</Text>
+              <Text style={styles.label}>
+                Date of Birth: {item.dateOfBirth}
+              </Text>
               <Text style={styles.label}>
                 Mobile Number: {item.mobileNumber}
               </Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={styles.button}
-                  onPress={() => handleEdit(index)}>
-                  <Text style={styles.buttonText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.button1}
-                  onPress={() => handleDelete(index)}>
-                  <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
+              <Text style={styles.label}>
+                Father's Name: {item.fathersName}
+              </Text>
+              <Text style={styles.label}>
+                Father's Occupation: {item.fathersOccupation}
+              </Text>
+              <Text style={styles.label}>
+                Mother's Name: {item.mothersName}
+              </Text>
+              <Text style={styles.label}>
+                Mother's Occupation: {item.mothersOccupation}
+              </Text>
+              <Text style={styles.label}>
+                Selected Class: {item.selectedClass}
+              </Text>
+              <Text style={styles.label}>
+                Selected Gender: {item.selectedGender}
+              </Text>
+              <Text style={styles.label}>Address: {item.address}</Text>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => handleEdit(index)}>
+                <Text style={styles.buttonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.button1}
+                onPress={() => handleDelete(index)}>
+                <Text style={styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
             </View>
           )}
         />
@@ -126,6 +148,16 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
     backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    backgroundColor: '#53a6be',
+    textAlign: 'center',
+    borderRadius: 10,
+    padding: 5,
+    width: '100%',
   },
   input: {
     height: 40,
@@ -146,24 +178,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
   button: {
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    width: '48%', // Adjust width as needed
+    marginTop: 5,
   },
   button1: {
     backgroundColor: '#dc3545',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    width: '48%', // Adjust width as needed
+    marginTop: 5,
   },
   buttonText: {
     color: '#fff',

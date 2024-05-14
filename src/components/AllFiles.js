@@ -2486,3 +2486,537 @@ const styles = StyleSheet.create({
 });
 
 export default DisplayScreen;
+
+
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+function DataFilterScreen({navigation}) {
+  const [studentData, setStudentData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchName, setSearchName] = useState('');
+  const [searchClass, setSearchClass] = useState('');
+  const [searchMobile, setSearchMobile] = useState('');
+
+  useEffect(() => {
+    loadStudentData();
+  }, []);
+
+  const loadStudentData = async () => {
+    try {
+      const storedStudentData = await AsyncStorage.getItem('studentData');
+      if (storedStudentData !== null) {
+        const parsedStudentData = JSON.parse(storedStudentData);
+        setStudentData(parsedStudentData);
+        setFilteredData(parsedStudentData); // Initialize filteredData with all studentData
+      }
+    } catch (error) {
+      console.error('Error loading student data: ', error);
+    }
+  };
+
+  const handleSearch = () => {
+    // Filter the data based on search criteria
+    const filtered = studentData.filter(student => {
+      return (
+        student.name.toLowerCase().includes(searchName.toLowerCase()) &&
+        student.selectedClass
+          .toLowerCase()
+          .includes(searchClass.toLowerCase()) &&
+        student.mobileNumber.toLowerCase().includes(searchMobile.toLowerCase())
+      );
+    });
+    setFilteredData(filtered);
+  };
+
+  const handleShowAll = () => {
+    // Display all student data
+    setFilteredData(studentData);
+    setSearchName('');
+    setSearchClass('');
+    setSearchMobile('');
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Search by Name"
+          onChangeText={setSearchName}
+          value={searchName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Search by Class"
+          onChangeText={setSearchClass}
+          value={searchClass}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Search by Mobile Number"
+          onChangeText={setSearchMobile}
+          value={searchMobile}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleSearch}>
+          <Text style={styles.buttonText}>Search</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleShowAll}>
+          <Text style={styles.buttonText}>Show All</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={filteredData}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({item}) => (
+          <View style={styles.itemContainer}>
+            <Text style={styles.label}>Name: {item.name}</Text>
+            <Text style={styles.label}>Class: {item.selectedClass}</Text>
+            <Text style={styles.label}>Mobile Number: {item.mobileNumber}</Text>
+          </View>
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    marginRight: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: 'gray',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  itemContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+});
+
+export default DataFilterScreen;
+
+
+
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
+
+  useEffect(() => {
+    loadStudentData();
+  }, []);
+
+  const loadStudentData = async () => {
+    try {
+      const storedStudentData = await AsyncStorage.getItem('studentData');
+      if (storedStudentData !== null) {
+        const parsedStudentData = JSON.parse(storedStudentData);
+        setStudentData(parsedStudentData);
+        setFilteredData(parsedStudentData);
+      }
+    } catch (error) {
+      console.error('Error loading student data: ', error);
+    }
+  };
+
+  const handleEdit = index => {
+    navigation.navigate('FormInputScreen', {
+      studentIndex: index,
+      studentData: studentData[index],
+    });
+  };
+
+  const handleDelete = index => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this entry?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: () => deleteEntry(index),
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const deleteEntry = async index => {
+    try {
+      const updatedData = studentData.filter((_, i) => i !== index);
+      await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
+      setStudentData(updatedData);
+      setFilteredData(updatedData);
+    } catch (error) {
+      console.error('Error deleting entry: ', error);
+    }
+  };
+
+  const handleSearch = query => {
+    setSearchQuery(query);
+    const filtered = studentData.filter(student => {
+      return (
+        student.name.toLowerCase().includes(query.toLowerCase()) ||
+        student.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
+        student.selectedClass.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+    setFilteredData(filtered);
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Search"
+        onChangeText={handleSearch}
+        value={searchQuery}
+      />
+      {filteredData.length > 0 ? (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({item, index}) => (
+            <View style={styles.itemContainer}>
+              <Text style={styles.label}>Name: {item.name}</Text>
+              <Text style={styles.label}>Class: {item.selectedClass}</Text>
+              <Text style={styles.label}>
+                Mobile Number: {item.mobileNumber}
+              </Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleEdit(index)}>
+                  <Text style={styles.buttonText}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.button1}
+                  onPress={() => handleDelete(index)}>
+                  <Text style={styles.buttonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        />
+      ) : (
+        <Text>No matching data found.</Text>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  itemContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%', // Adjust width as needed
+  },
+  button1: {
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    width: '48%', // Adjust width as needed
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+export default FormDataScreen;
+
+
+
+
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+function DataFilterScreen({navigation}) {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchName, setSearchName] = useState('');
+  const [searchClass, setSearchClass] = useState('');
+  const [searchMobile, setSearchMobile] = useState('');
+
+  const studentDataRef = useRef([]);
+
+  useEffect(() => {
+    loadStudentData();
+  }, []);
+
+  const loadStudentData = async () => {
+    try {
+      const storedStudentData = await AsyncStorage.getItem('studentData');
+      if (storedStudentData !== null) {
+        const parsedStudentData = JSON.parse(storedStudentData);
+        studentDataRef.current = parsedStudentData;
+        setFilteredData(parsedStudentData);
+      }
+    } catch (error) {
+      console.error('Error loading student data: ', error);
+    }
+  };
+
+  // Define a function to update student data
+  const updateStudentData = async updatedData => {
+    try {
+      // Save updated student data to AsyncStorage
+      await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
+      // Update the state with the updated student data
+      setStudentData(updatedData);
+    } catch (error) {
+      console.error('Error updating student data: ', error);
+    }
+  };
+
+  // Pass the updateStudentData function as a prop to the FormInputScreen
+  // <FormInputScreen
+  //   navigation={navigation}
+  //   updateStudentData={updateStudentData}
+  // />;
+
+  const handleSearch = () => {
+    // Filter the data based on search criteria
+    const filtered = studentData.filter(student => {
+      return (
+        student.name.toLowerCase().includes(searchName.toLowerCase()) &&
+        student.selectedClass
+          .toLowerCase()
+          .includes(searchClass.toLowerCase()) &&
+        student.mobileNumber.toLowerCase().includes(searchMobile.toLowerCase())
+      );
+    });
+    setFilteredData(filtered);
+  };
+
+  // Function to validate name input
+  const validateNameInput = text => {
+    // Allow only letters, dots, and spaces
+    return /^[a-zA-Z .]*$/.test(text);
+  };
+
+  // Function to validate mobile number input
+  const validateMobileInput = text => {
+    // Allow only numbers and exactly 10 digits
+    return /^[0-9]{0,10}$/.test(text);
+  };
+
+  const handleItemPress = item => {
+    // Navigate to FormDataScreen with selected data
+    navigation.navigate('FormDataScreen', {studentData: item});
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Name"
+          onChangeText={text => {
+            if (validateNameInput(text) || text === '') {
+              setSearchName(text);
+            }
+          }}
+          value={searchName}
+        />
+        <Picker
+          style={styles.input}
+          selectedValue={searchClass}
+          onChangeText={setSearchClass}
+          onValueChange={(itemValue, itemIndex) => setSearchClass(itemValue)}>
+          <Picker.Item label="Class" value="" />
+          <Picker.Item label="LKG" value="LKG" />
+          <Picker.Item label="UKG" value="UKG" />
+          <Picker.Item label="I" value="I" />
+          <Picker.Item label="II" value="II" />
+          <Picker.Item label="III" value="III" />
+          <Picker.Item label="IV" value="IV" />
+          <Picker.Item label="V" value="V" />
+          <Picker.Item label="VI" value="VI" />
+          <Picker.Item label="VII" value="VII" />
+          <Picker.Item label="VIII" value="VIII" />
+          <Picker.Item label="IX" value="IX" />
+          <Picker.Item label="X" value="X" />
+          <Picker.Item label="XI" value="XI" />
+          <Picker.Item label="XII" value="XII" />
+          {/* Add other classes as needed */}
+        </Picker>
+        <TextInput
+          style={styles.input}
+          placeholder="Mobile"
+          onChangeText={text => {
+            if (validateMobileInput(text) || text === '') {
+              setSearchMobile(text);
+            }
+          }}
+          value={searchMobile}
+          keyboardType="numeric"
+        />
+      </View>
+      <TouchableOpacity style={styles.button} onPress={handleSearch}>
+        <Text style={styles.buttonText}>Search</Text>
+      </TouchableOpacity>
+
+      {/* Render the list of data */}
+      <FlatList
+        data={filteredData}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({item}) => (
+          <TouchableOpacity onPress={() => handleItemPress(item)}>
+            <View style={styles.itemContainer}>
+              <Text style={styles.label}>Name: {item.name}</Text>
+              <Text style={styles.label}>Class: {item.selectedClass}</Text>
+              <Text style={styles.label}>
+                Mobile Number: {item.mobileNumber}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  input: {
+    flex: 1,
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginRight: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  itemContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+});
+
+export default DataFilterScreen;

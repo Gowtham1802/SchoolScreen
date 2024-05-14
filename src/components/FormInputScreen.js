@@ -1,5 +1,3 @@
-// FormInputScreen.js
-
 import React, {useState, useEffect} from 'react';
 import {
   View,
@@ -9,9 +7,9 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
+  ImageBackground,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import DatePicker from 'react-native-datepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Import the generateRandomUserId function
@@ -28,7 +26,7 @@ const FormInputScreen = ({navigation, route}) => {
   const [formData, setFormData] = useState({
     // Add a userId field to the form data
     name: '',
-    dateOfBirth: new Date(),
+    dateOfBirth: '',
     mobileNumber: '',
     fathersName: '',
     fathersOccupation: '',
@@ -66,9 +64,25 @@ const FormInputScreen = ({navigation, route}) => {
   }, [route.params]);
 
   const handleChange = (key, value) => {
+    let sanitizedValue = value;
+
+    // For fields that should only allow text, spaces, and dots
+    if (
+      [
+        'name',
+        'fathersName',
+        'fathersOccupation',
+        'mothersName',
+        'mothersOccupation',
+      ].includes(key)
+    ) {
+      // Remove any characters that are not letters, spaces, or dots
+      sanitizedValue = value.replace(/[^a-zA-Z .]/g, '');
+    }
+
     setFormData({
       ...formData,
-      [key]: value,
+      [key]: sanitizedValue,
     });
   };
 
@@ -106,7 +120,7 @@ const FormInputScreen = ({navigation, route}) => {
         console.log('UserData:', userData);
         console.log('StudentData:', studentData);
 
-        navigation.navigate('FormDataScreen');
+        navigation.navigate('DataFilterScreen');
       } catch (error) {
         console.error('Error saving form data: ', error);
       }
@@ -176,163 +190,170 @@ const FormInputScreen = ({navigation, route}) => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{
-        flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-      }}>
-      <View
-        style={{
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1572355286138-8dae8e7ba20d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      }}
+      style={styles.backgroundImage}>
+      <ScrollView
+        contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: 'flex-start',
+          justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#b5d8e3',
-          borderRadius: 15,
-          width: '100%',
           padding: 20,
         }}>
-        <Text
+        <View
           style={{
-            fontSize: 24,
-            fontWeight: 'bold',
-            marginBottom: 20,
-            backgroundColor: '#53a6be',
-            textAlign: 'center',
-            // borderRadius: 15,
-            padding: 10,
+            flexGrow: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            // backgroundColor: 'rgba(255, 255, 255, 0.5)', // Add opacity to background color
+            borderRadius: 15,
             width: '100%',
+            padding: 20,
           }}>
-          Enter Your Details
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          onChangeText={text => handleChange('name', text)}
-          value={formData.name}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Date of Birth (DD-MM-YYYY)"
-          onChangeText={text => handleChange('dateOfBirth', text)}
-          value={formData.dateOfBirth}
-          keyboardType="numeric"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Mobile Number"
-          onChangeText={text => {
-            // Remove any non-numeric characters from the input
-            const numericValue = text.replace(/\D/g, '');
-            // Check if the input contains 10 digits or less
-            if (numericValue.length <= 10) {
-              // Update the mobileNumber state with the sanitized value
-              handleChange('mobileNumber', numericValue);
-            }
-          }}
-          value={formData.mobileNumber} // Numeric keyboard
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Father's Name"
-          onChangeText={text => handleChange('fathersName', text)}
-          value={formData.fathersName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Father's Occupation"
-          onChangeText={text => handleChange('fathersOccupation', text)}
-          value={formData.fathersOccupation}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Mother's Name"
-          onChangeText={text => handleChange('mothersName', text)}
-          value={formData.mothersName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Mother's Occupation"
-          onChangeText={text => handleChange('mothersOccupation', text)}
-          value={formData.mothersOccupation}
-        />
-        <Picker
-          selectedValue={formData.selectedClass}
-          style={styles.input}
-          onValueChange={(itemValue, itemIndex) =>
-            handleChange('selectedClass', itemValue)
-          }>
-          <Picker.Item label="Select a Class" value="" />
-          <Picker.Item label="LKG" value="LKG" />
-          <Picker.Item label="UKG" value="UKG" />
-          <Picker.Item label="1st standard" value="1st standard" />
-          <Picker.Item label="2nd standard" value="2nd standard" />
-          <Picker.Item label="3rd standard" value="3rd standard" />
-          <Picker.Item label="4th standard" value="4th standard" />
-          <Picker.Item label="5th standard" value="5th standard" />
-          <Picker.Item label="6th standard" value="6th standard" />
-          <Picker.Item label="7th standard" value="7th standard" />
-          <Picker.Item label="8th standard" value="8th standard" />
-          <Picker.Item label="9th standard" value="9th standard" />
-          <Picker.Item label="10th standard" value="10th standard" />
-          <Picker.Item label="11th standard" value="11th standard" />
-          <Picker.Item label="12th standard" value="12th standard" />
-          {/* Add more class options as needed */}
-        </Picker>
-        <Picker
-          selectedValue={formData.selectedGender}
-          style={styles.input}
-          onValueChange={(itemValue, itemIndex) =>
-            handleChange('selectedGender', itemValue)
-          }>
-          <Picker.Item label="Select a Gender" value="" />
-          <Picker.Item label="Male" value="Male" />
-          <Picker.Item label="Female" value="Female" />
-        </Picker>
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              marginBottom: 20,
+              backgroundColor: '#018c6a',
+              color: '#fff',
+              textAlign: 'center',
+              padding: 10,
+              width: '100%',
+            }}>
+            Enter Your Details
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            onChangeText={text => handleChange('name', text)}
+            value={formData.name}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Date of Birth (DD-MM-YYYY)"
+            onChangeText={text => handleChange('dateOfBirth', text)}
+            value={formData.dateOfBirth}
+            keyboardType="numeric"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Mobile Number"
+            onChangeText={text => {
+              // Remove any non-numeric characters from the input
+              const numericValue = text.replace(/\D/g, '');
+              // Check if the input contains 10 digits or less
+              if (numericValue.length <= 10) {
+                // Update the mobileNumber state with the sanitized value
+                handleChange('mobileNumber', numericValue);
+              }
+            }}
+            value={formData.mobileNumber} // Numeric keyboard
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Name"
+            onChangeText={text => handleChange('fathersName', text)}
+            value={formData.fathersName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Occupation"
+            onChangeText={text => handleChange('fathersOccupation', text)}
+            value={formData.fathersOccupation}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Name"
+            onChangeText={text => handleChange('mothersName', text)}
+            value={formData.mothersName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Occupation"
+            onChangeText={text => handleChange('mothersOccupation', text)}
+            value={formData.mothersOccupation}
+          />
+          <Picker
+            selectedValue={formData.selectedClass}
+            style={styles.input}
+            onValueChange={(itemValue, itemIndex) =>
+              handleChange('selectedClass', itemValue)
+            }>
+            <Picker.Item label="Select a Class" value="" />
+            <Picker.Item label="LKG" value="LKG" />
+            <Picker.Item label="UKG" value="UKG" />
+            <Picker.Item label="1st" value="1st" />
+            <Picker.Item label="2nd" value="2nd" />
+            <Picker.Item label="3rd" value="3rd" />
+            <Picker.Item label="4th" value="4th" />
+            <Picker.Item label="5th" value="5th" />
+            <Picker.Item label="6th" value="6th" />
+            <Picker.Item label="7th" value="7th" />
+            <Picker.Item label="8th" value="8th" />
+            <Picker.Item label="9th" value="9th" />
+            <Picker.Item label="10th" value="10th" />
+            <Picker.Item label="11th" value="11th" />
+            <Picker.Item label="12th" value="12th" />
+            {/* Add other classes as needed */}
+          </Picker>
+          <Picker
+            selectedValue={formData.selectedGender}
+            style={styles.input}
+            onValueChange={(itemValue, itemIndex) =>
+              handleChange('selectedGender', itemValue)
+            }>
+            <Picker.Item label="Select a Gender" value="" />
+            <Picker.Item label="Male" value="Male" />
+            <Picker.Item label="Female" value="Female" />
+          </Picker>
 
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Address"
-          onChangeText={text => handleChange('address', text)}
-          value={formData.address}
-          multiline={true}
-        />
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={[styles.button, {backgroundColor: '#53a6be'}]}>
-            <Text style={styles.buttonText}>Submit</Text>
-          </TouchableOpacity>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Address"
+            onChangeText={text => handleChange('address', text)}
+            value={formData.address}
+            multiline={true}
+          />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={[styles.button, {backgroundColor: '#04b58a'}]}>
+              <Text style={styles.buttonText}>Submit</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleGetData}
-            style={[styles.button, {backgroundColor: '#53a6be'}]}>
-            <Text style={styles.buttonText}>Get Data</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleGetData}
+              style={[styles.button, {backgroundColor: '#04b58a'}]}>
+              <Text style={styles.buttonText}>Get Data</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </ImageBackground>
   );
 };
+
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
   input: {
     height: 60,
-    // borderWidth: 1,
     marginVertical: 10,
     padding: 5,
     width: '100%',
     backgroundColor: '#fff',
-    // borderRadius: 5,
-    // textAlignVertical: 'top',
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
-  buttonContainer: {
-    // marginBottom: 10,
-  },
+  buttonContainer: {},
   button: {
     backgroundColor: '#53a6be',
     padding: 10,
