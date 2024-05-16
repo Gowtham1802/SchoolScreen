@@ -6,7 +6,9 @@ import FormScreen from './src/components/FormScreen';
 import DisplayScreen from './src/components/DisplayScreen';
 import FormInputScreen from './src/components/FormInputScreen';
 import FormDataScreen from './src/components/FormDataScreen';
-import DataFilterScreen from './src/components/DataFilterScreen';
+import DataFilterScreen from './src/components/ProfileCardScreen';
+import ProfileCardScreen from './src/components/ProfileCardScreen';
+import EditInputScreen from './src/components/EditInputScreen';
 import StudentDetailsScreen from './src/components/StudentDetailsScreen';
 import {TouchableOpacity, Text} from 'react-native';
 
@@ -44,15 +46,17 @@ const App = () => {
     // </NavigationContainer>
 
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="DataFilterScreen">
+      <Stack.Navigator initialRouteName="FormDataScreen">
         <Stack.Screen
           name="FormInputScreen"
           component={FormInputScreen}
           options={{headerShown: false}}
         />
+        <Stack.Screen name="ProfileCardScreen" component={ProfileCardScreen} />
+        <Stack.Screen name="EditInputScreen" component={EditInputScreen} />
         <Stack.Screen
-          name="DataFilterScreen"
-          component={DataFilterScreen}
+          name="FormDataScreen"
+          component={FormDataScreen}
           options={({navigation}) => ({
             headerShown: true,
             headerRight: () => (
@@ -68,11 +72,6 @@ const App = () => {
               </TouchableOpacity>
             ),
           })}
-        />
-        <Stack.Screen
-          name="FormDataScreen"
-          component={FormDataScreen}
-          options={{headerShown: false}}
         />
         {/* <Stack.Screen
           name="StudentDetailsScreen"

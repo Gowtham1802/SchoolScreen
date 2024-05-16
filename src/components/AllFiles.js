@@ -3020,3 +3020,1513 @@ const styles = StyleSheet.create({
 });
 
 export default DataFilterScreen;
+
+
+
+
+
+import React, {useState, useEffect} from 'react';
+import {View, Text, TouchableOpacity, FlatList, StyleSheet, Alert} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedStudentData = await AsyncStorage.getItem('studentData');
+        if (storedStudentData) {
+          setStudentData(JSON.parse(storedStudentData));
+        }
+      } catch (error) {
+        console.error('Error fetching student data: ', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleDelete = async index => {
+    Alert.alert(
+      'Delete Confirmation',
+      'Are you sure you want to delete this student?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const updatedData = [...studentData];
+              updatedData.splice(index, 1);
+              await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
+              setStudentData(updatedData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const handleUpdate = index => {
+    const selectedStudentData = studentData[index];
+    navigation.navigate('FormInputScreen', {studentData: selectedStudentData, studentIndex: index});
+  };
+
+  const handleNavigate = student => {
+    navigation.navigate('ProfileCardScreen', {student});
+  };
+
+  return (
+    <View style={styles.container}>
+      {studentData.length === 0 ? (
+        <Text style={styles.emptyText}>No student data available</Text>
+      ) : (
+        <FlatList
+          data={studentData}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({item, index}) => (
+            <TouchableOpacity style={styles.itemContainer} onPress={() => handleNavigate(item)}>
+              <Text style={styles.itemText}>{item.name}</Text>
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity style={styles.updateButton} onPress={() => handleUpdate(index)}>
+                  <Text style={styles.updateButtonText}>Update</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(index)}>
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  itemContainer: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 5,
+    elevation: 1,
+  },
+  itemText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  updateButton: {
+    backgroundColor: '#007AFF',
+    padding: 5,
+    borderRadius: 5,
+  },
+  updateButtonText: {
+    color: 'white',
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    padding: 5,
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
+  },
+});
+
+export default FormDataScreen;
+
+
+
+
+import React, {useEffect, useState, useRef} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+} from 'react-native';
+import ProfileCardScreen from './ProfileCardScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const FormDataScreen = ({navigation}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
+
+  // Use useRef to create a mutable object for studentData
+  const studentDataRef = useRef([]);
+
+  useEffect(() => {
+    loadStudentData();
+  }, []);
+
+  const loadStudentData = async () => {
+    try {
+      const storedStudentData = await AsyncStorage.getItem('studentData');
+      if (storedStudentData !== null) {
+        const parsedStudentData = JSON.parse(storedStudentData);
+        studentDataRef.current = parsedStudentData;
+        setFilteredData(parsedStudentData);
+      }
+    } catch (error) {
+      console.error('Error loading student data: ', error);
+    }
+  };
+
+  const handleEdit = index => {
+    navigation.navigate('FormInputScreen', {
+      studentIndex: index,
+      studentData: studentDataRef.current[index],
+    });
+  };
+
+  const handleDelete = index => {
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to delete this entry?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: () => deleteEntry(index),
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const deleteEntry = async index => {
+    try {
+      const updatedData = studentDataRef.current.filter((_, i) => i !== index);
+      await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
+      studentDataRef.current = updatedData;
+      setFilteredData(updatedData);
+    } catch (error) {
+      console.error('Error deleting entry: ', error);
+    }
+  };
+
+  const handleSearch = query => {
+    setSearchQuery(query);
+    const filtered = studentDataRef.current.filter(student => {
+      return (
+        student.name.toLowerCase().includes(query.toLowerCase()) ||
+        student.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
+        student.selectedClass.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+    setFilteredData(filtered);
+  };
+
+const handleNavigate = student => {
+  navigation.navigate('ProfileCardScreen', {student});
+};
+
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Search"
+        onChangeText={handleSearch}
+        value={searchQuery}
+      />
+      {filteredData.length > 0 ? (
+        <FlatList
+          data={filteredData}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={({item, index}) => (
+            <TouchableOpacity
+              style={styles.itemContainer}
+              onPress={() => handleNavigate(item)}>
+              <Text style={styles.itemText}>{item.name}</Text>
+              <Text style={styles.itemText}>{item.selectedClass}</Text>
+              <Text style={styles.itemText}>{item.mobileNumber}</Text>
+              <View style={styles.buttonContainer}>
+                {/* <TouchableOpacity
+                  style={styles.updateButton}
+                  onPress={() => handleUpdate(index)}>
+                  <Text style={styles.updateButtonText}>Update</Text>
+                </TouchableOpacity> */}
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDelete(index)}>
+                  <Text style={styles.deleteButtonText}>Delete</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <Text>No matching data found.</Text>
+      )}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 10,
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    backgroundColor: '#53a6be',
+    textAlign: 'center',
+    borderRadius: 10,
+    padding: 5,
+    width: '100%',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  itemContainer: {
+    marginBottom: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  deleteButton: {
+    color: '#fff',
+    backgroundColor: '#dc3545',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+export default FormDataScreen;
+
+
+
+// ProfileCardScreen.js
+
+import React from 'react';
+import {StyleSheet, View, Text, Image, ScrollView, TouchableOpacity} from 'react-native';
+import {Card, Title, Paragraph} from 'react-native-paper';
+
+const ProfileCardScreen = ({route, navigation}) => {
+
+  const {studentData} = route.params;
+
+  const handleEdit = () => {
+    navigation.navigate('FormInputScreen', {studentData});
+  };
+
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content style={styles.cardContent}>
+          <Image
+            source={{uri: 'https://example.com/your-image.jpg'}} // Replace with the actual image URL
+            style={styles.image}
+          />
+          <Title style={styles.title}>{studentData.name}</Title>
+          <Paragraph style={styles.subTitle}>Basic Info</Paragraph>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Class:</Text>
+            <Text style={styles.value}>{studentData.selectedClass}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mobile Number:</Text>
+            <Text style={styles.value}>{studentData.mobileNumber}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Data Of Birth:</Text>
+            <Text style={styles.value}>{studentData.dateOfBirth}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Selected Gender:</Text>
+            <Text style={styles.value}>{studentData.selectedGender}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Father's Name:</Text>
+            <Text style={styles.value}>{studentData.fathersName}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Father's Occupation:</Text>
+            <Text style={styles.value}>{studentData.fathersOccupation}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mother's Name:</Text>
+            <Text style={styles.value}>{studentData.mothersName}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mother's Occupation:</Text>
+            <Text style={styles.value}>{studentData.mothersOccupation}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Address:</Text>
+            <Text style={styles.value}>{studentData.address}</Text>
+          </View>
+          <Paragraph style={styles.subTitle}>Personal Info</Paragraph>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>E-Mail:</Text>
+            <Text style={styles.value}>1234@gmail.com</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Category:</Text>
+            <Text style={styles.value}>scholarship</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Religion:</Text>
+            <Text style={styles.value}>Hindu</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Birth Place:</Text>
+            <Text style={styles.value}>Chhattisgarh</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Cast:</Text>
+            <Text style={styles.value}>FC</Text>
+          </View>
+        </Card.Content>
+         <TouchableOpacity style={styles.button} onPress={handleEdit}>
+        <Text style={styles.buttonText}>Edit</Text>
+      </TouchableOpacity>
+      </Card>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 10,
+    elevation: 4,
+  },
+  cardContent: {
+    alignItems: 'center',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+  },
+  label: {
+    flex: 1,
+    fontWeight: 'bold',
+  },
+  value: {
+    flex: 2,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+export default ProfileCardScreen;
+
+
+
+// src/ContactList.js
+import React from 'react';
+import {FlatList, View, Text, Image, StyleSheet, TextInput} from 'react-native';
+
+const contacts = [
+  {id: '1', name: 'HARI', class: 'X-A', phone: '8765322467'},
+  {id: '2', name: 'JISHA A S', class: 'X-A', phone: '8456725894'},
+  {id: '3', name: 'REKHA MENON', class: 'X-A', phone: '9717704366'},
+  {id: '4', name: 'VISRUTHI N', class: 'X-A', phone: '7708883394'},
+  {id: '5', name: 'AARUN BALAJ', class: 'X-A', phone: '9444835528'},
+  {
+    id: '6',
+    name: 'ABISHEK D',
+    class: 'X-A',
+    phone: '8667756528',
+    image: 'https://example.com/abishek.jpg',
+  },
+  {
+    id: '7',
+    name: 'ANKIT KUMAR SINGH',
+    class: 'X-A',
+    phone: '7869214627',
+    image: 'https://example.com/ankit.jpg',
+  },
+  // Add more contacts as needed
+];
+
+const ContactList = () => {
+  const renderItem = ({item}) => (
+    <View style={styles.contactItem}>
+      {item.image ? (
+        <Image source={{uri: item.image}} style={styles.image} />
+      ) : (
+        <View style={styles.placeholderImage} />
+      )}
+      <View style={styles.contactInfo}>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.class}>{item.class}</Text>
+        <Text style={styles.phone}>{item.phone}</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search Name, Admission No, Mobile No..."
+      />
+      <FlatList
+        data={contacts}
+        renderItem={renderItem}
+        keyExtractor={item => item.id}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  searchBar: {
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 5,
+    margin: 10,
+    paddingLeft: 10,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    alignItems: 'center',
+  },
+  image: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  placeholderImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ccc',
+  },
+  contactInfo: {
+    marginLeft: 10,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  class: {
+    color: '#777',
+  },
+  phone: {
+    color: '#007AFF',
+  },
+});
+
+export default ContactList;
+
+
+
+App.js
+
+import 'react-native-gesture-handler';
+import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import FormScreen from './src/components/FormScreen';
+import DisplayScreen from './src/components/DisplayScreen';
+import FormInputScreen from './src/components/FormInputScreen';
+import FormDataScreen from './src/components/FormDataScreen';
+import DataFilterScreen from './src/components/ProfileCardScreen';
+import ProfileCardScreen from './src/components/ProfileCardScreen';
+import StudentDetailsScreen from './src/components/StudentDetailsScreen';
+import {TouchableOpacity, Text} from 'react-native';
+
+const Stack = createStackNavigator();
+
+const App = () => {
+  return (
+    // <NavigationContainer>
+    //   <Stack.Navigator initialRouteName="Students List">
+    //     <Stack.Screen
+    //       name="FormScreen"
+    //       component={FormScreen}
+    //       options={{headerShown: false}}
+    //     />
+    //     <Stack.Screen
+    //       name="Students List"
+    //       component={DisplayScreen}
+    //       options={({navigation}) => ({
+    //         headerShown: true,
+    //         headerRight: () => (
+    //           <TouchableOpacity
+    //             style={{
+    //               marginRight: 10,
+    //               backgroundColor: 'green',
+    //               padding: 8,
+    //               borderRadius: 5,
+    //             }}
+    //             onPress={() => navigation.navigate('FormScreen')}>
+    //             <Text style={{color: 'white'}}>Add New</Text>
+    //           </TouchableOpacity>
+    //         ),
+    //       })}
+    //     />
+    //   </Stack.Navigator>
+    // </NavigationContainer>
+
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="FormDataScreen">
+        <Stack.Screen
+          name="FormInputScreen"
+          component={FormInputScreen}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen 
+        name="ProfileCardScreen" 
+        component={ProfileCardScreen} />
+        <Stack.Screen
+          name="FormDataScreen"
+          component={FormDataScreen}
+          options={({navigation}) => ({
+            headerShown: true,
+            headerRight: () => (
+              <TouchableOpacity
+                style={{
+                  marginRight: 10,
+                  backgroundColor: 'green',
+                  padding: 8,
+                  borderRadius: 5,
+                }}
+                onPress={() => navigation.navigate('FormInputScreen' + '')}>
+                <Text style={{color: 'white'}}>Add New</Text>
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        {/* <Stack.Screen
+          name="StudentDetailsScreen"
+          component={StudentDetailsScreen}
+          options={{headerShown: false}}
+        /> */}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default App;
+
+
+FormDataScreen.js
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      // console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleViewProfile = student => {
+    navigation.navigate('ProfileCardScreen', {studentData: student});
+  };
+
+  const renderStudentItem = ({item}) => (
+    <View style={styles.itemContainer}>
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handleViewProfile(item)}>
+        <Text style={styles.itemText}>{item.name}</Text>
+        <Text style={styles.itemText}>{item.selectedClass}</Text>
+        <Text style={styles.itemText}>{item.mobileNumber}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteStudent(item.userId)}>
+        <Text style={styles.deleteButtonText}>Delete</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const handleSearch = () => {
+    // Filter student data based on searchQuery
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return name.includes(query);
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Student List</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Search by name"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <FlatList
+        data={handleSearch()} // Render filtered student data
+        renderItem={renderStudentItem}
+        keyExtractor={item => item.userId}
+        contentContainerStyle={{flexGrow: 1}}
+        ListEmptyComponent={<Text>No student data found</Text>}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  item: {
+    flex: 1,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  itemText: {
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
+
+export default FormDataScreen;
+
+
+FormInputScreen.js
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  ImageBackground,
+} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+// import {useUpdate} from './UpdateContext'; // Import the useUpdate hook
+
+function generateRandomUserId(length) {
+  const characters = '0123456789';
+  let userId = '';
+  for (let i = 0; i < length; i++) {
+    userId += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return userId;
+}
+
+const FormInputScreen = ({navigation, route}) => {
+  // const {setUpdatedStudent} = useUpdate(); // Use the useUpdate hook
+  const [formData, setFormData] = useState({
+    name: '',
+    dateOfBirth: '',
+    mobileNumber: '',
+    fathersName: '',
+    fathersOccupation: '',
+    mothersName: '',
+    mothersOccupation: '',
+    selectedClass: '',
+    selectedGender: 'Select a Gender',
+    address: '',
+  });
+
+  useEffect(() => {
+    try {
+      const id = route.params?.id;
+
+      if (route.params && route.params.studentData) {
+        setFormData(route.params.studentData);
+      } else {
+        setFormData({
+          name: '',
+          dateOfBirth: '',
+          mobileNumber: '',
+          fathersName: '',
+          fathersOccupation: '',
+          mothersName: '',
+          mothersOccupation: '',
+          selectedClass: '',
+          selectedGender: '',
+          address: '',
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }, [route.params]);
+
+  const handleChange = (key, value) => {
+    let sanitizedValue = value;
+
+    if (
+      [
+        'name',
+        'fathersName',
+        'fathersOccupation',
+        'mothersName',
+        'mothersOccupation',
+      ].includes(key)
+    ) {
+      sanitizedValue = value.replace(/[^a-zA-Z .]/g, '');
+    }
+
+    setFormData({
+      ...formData,
+      [key]: sanitizedValue,
+    });
+  };
+
+  const handleSubmit = async () => {
+    const errors = handleValidation();
+    if (Object.keys(errors).length === 0) {
+      try {
+        const userId = generateRandomUserId(4);
+        const userData = {...formData, userId};
+
+        const existingStudentData = await AsyncStorage.getItem('studentData');
+        let studentData = existingStudentData
+          ? JSON.parse(existingStudentData)
+          : [];
+
+        // console.log(route.params.studentIndex);
+        if (route.params && route.params.studentIndex !== undefined) {
+          // If studentIndex is available, update the data at that index
+          studentData[route.params.studentIndex] = userData;
+        } else {
+          // Otherwise, it's a new entry, so push the data
+          studentData.push(userData);
+        }
+
+        await AsyncStorage.setItem('studentData', JSON.stringify(studentData));
+
+        console.log('FormData:', formData);
+        // console.log('UserData:', userData);
+        // console.log('StudentData:', studentData);
+
+        const objIndex = studentData.findIndex(
+          obj => obj.userData == userData.name,
+        );
+        //         console.log('Before update objIndex:  ', objIndex);
+        //
+        //         console.log('Before update: ', studentData);
+        if (objIndex !== -1) {
+          // Update the form data with the new user data
+          studentData[objIndex] = formData;
+        }
+
+        Alert.alert('Success', 'Student data has been successfully submitted', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('FormDataScreen');
+            },
+          },
+        ]);
+      } catch (error) {
+        console.error('Error saving form data: ', error);
+      }
+    } else {
+      Alert.alert('Validation Error', Object.values(errors).join('\n'));
+    }
+  };
+
+  const handleGetData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        const lastEntry = JSON.parse(existingStudentData).pop();
+        if (lastEntry) {
+          setFormData(lastEntry);
+        }
+      } else {
+        alert('No data found');
+      }
+    } catch (error) {
+      console.error('Error getting form data: ', error);
+    }
+  };
+
+  const handleValidation = () => {
+    const errors = {};
+
+    if (!formData.name) {
+      errors.name = 'Name is required';
+    }
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = 'Date of Birth is required';
+    }
+    if (!formData.mobileNumber) {
+      errors.mobileNumber = 'Mobile Number is required';
+    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      errors.mobileNumber = 'Mobile Number must be 10 digits';
+    }
+    if (!formData.selectedGender) {
+      errors.selectedGender = 'Gender is required';
+    }
+    if (!formData.fathersName) {
+      errors.fathersName = "Father's Name is required";
+    }
+    if (!formData.fathersOccupation) {
+      errors.fathersOccupation = "Father's Occupation is required";
+    }
+    if (!formData.mothersName) {
+      errors.mothersName = "Mother's Name is required";
+    }
+    if (!formData.mothersOccupation) {
+      errors.mothersOccupation = "Mother's Occupation is required";
+    }
+    if (!formData.address) {
+      errors.address = 'Address is required';
+    }
+
+    return errors;
+  };
+
+  return (
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1572355286138-8dae8e7ba20d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      }}
+      style={styles.backgroundImage}>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        }}>
+        <View
+          style={{
+            flexGrow: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            // backgroundColor: 'rgba(255, 255, 255, 0.5)', // Add opacity to background color
+            backgroundColor: 'white',
+            borderRadius: 15,
+            width: '100%',
+            padding: 20,
+            gap: 20,
+          }}>
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              marginBottom: 20,
+              backgroundColor: '#018c6a',
+              color: '#fff',
+              textAlign: 'center',
+              padding: 10,
+              width: '100%',
+              borderRadius: 10,
+            }}>
+            Enter Your Details
+          </Text>
+          <Text style={styles.text}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            onChangeText={text => handleChange('name', text)}
+            value={formData.name}
+          />
+          <Text style={styles.text1}>Class</Text>
+          <View style={styles.input1}>
+            <Picker
+              selectedValue={formData.selectedClass}
+              onValueChange={(itemValue, itemIndex) =>
+                handleChange('selectedClass', itemValue)
+              }>
+              <Picker.Item label="Select a Class" value="" />
+              <Picker.Item label="LKG" value="LKG" />
+              <Picker.Item label="UKG" value="UKG" />
+              <Picker.Item label="1st" value="1st" />
+              <Picker.Item label="2nd" value="2nd" />
+              <Picker.Item label="3rd" value="3rd" />
+              <Picker.Item label="4th" value="4th" />
+              <Picker.Item label="5th" value="5th" />
+              <Picker.Item label="6th" value="6th" />
+              <Picker.Item label="7th" value="7th" />
+              <Picker.Item label="8th" value="8th" />
+              <Picker.Item label="9th" value="9th" />
+              <Picker.Item label="10th" value="10th" />
+              <Picker.Item label="11th" value="11th" />
+              <Picker.Item label="12th" value="12th" />
+              {/* Add other classes as needed */}
+            </Picker>
+          </View>
+          <Text style={styles.text2}>Gender</Text>
+          <View style={styles.input1}>
+            <Picker
+              selectedValue={formData.selectedGender}
+              onValueChange={(itemValue, itemIndex) =>
+                handleChange('selectedGender', itemValue)
+              }>
+              <Picker.Item label="Select a Gender" value="" />
+              <Picker.Item label="Male" value="Male" />
+              <Picker.Item label="Female" value="Female" />
+            </Picker>
+          </View>
+          <Text style={styles.text3}>Date Of Birth</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Date of Birth (DD-MM-YYYY)"
+            onChangeText={text => handleChange('dateOfBirth', text)}
+            value={formData.dateOfBirth}
+            keyboardType="numeric"
+          />
+          <Text style={styles.text4}>Mobile Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mobile Number"
+            onChangeText={text => {
+              // Remove any non-numeric characters from the input
+              const numericValue = text.replace(/\D/g, '');
+              // Check if the input contains 10 digits or less
+              if (numericValue.length <= 10) {
+                // Update the mobileNumber state with the sanitized value
+                handleChange('mobileNumber', numericValue);
+              }
+            }}
+            value={formData.mobileNumber} // Numeric keyboard
+          />
+          <Text style={styles.text5}>Father's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Name"
+            onChangeText={text => handleChange('fathersName', text)}
+            value={formData.fathersName}
+          />
+          <Text style={styles.text6}>Father's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Occupation"
+            onChangeText={text => handleChange('fathersOccupation', text)}
+            value={formData.fathersOccupation}
+          />
+          <Text style={styles.text7}>Mother's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Name"
+            onChangeText={text => handleChange('mothersName', text)}
+            value={formData.mothersName}
+          />
+          <Text style={styles.text8}>Mother's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Occupation"
+            onChangeText={text => handleChange('mothersOccupation', text)}
+            value={formData.mothersOccupation}
+          />
+
+          <Text style={styles.text9}>Address</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Address"
+            onChangeText={text => handleChange('address', text)}
+            value={formData.address}
+            multiline={true}
+          />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={[styles.button, {backgroundColor: '#04b58a'}]}>
+              <Text style={styles.buttonText}>Submit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleGetData}
+              style={[styles.button, {backgroundColor: '#04b58a'}]}>
+              <Text style={styles.buttonText}>Get Data</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </ImageBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
+  text: {
+    position: 'absolute',
+    width: 50,
+    left: 32,
+    top: 112,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text1: {
+    position: 'absolute',
+    width: 48,
+    left: 32,
+    top: 213,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text2: {
+    position: 'absolute',
+    width: 60,
+    left: 32,
+    top: 312,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text3: {
+    position: 'absolute',
+    width: 102,
+    left: 32,
+    top: 413,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text4: {
+    position: 'absolute',
+    width: 119,
+    left: 32,
+    top: 512,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text5: {
+    position: 'absolute',
+    width: 116,
+    left: 32,
+    top: 612,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text6: {
+    position: 'absolute',
+    width: 156,
+    left: 32,
+    top: 712,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text7: {
+    position: 'absolute',
+    width: 120,
+    left: 32,
+    top: 812,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text8: {
+    position: 'absolute',
+    width: 160,
+    left: 32,
+    top: 912,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text9: {
+    position: 'absolute',
+    width: 66,
+    left: 32,
+    top: 1012,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  input: {
+    height: 60,
+    marginVertical: 10,
+    padding: 15,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  input1: {
+    height: 60,
+    marginVertical: 10,
+    padding: 4,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  buttonContainer: {},
+  button: {
+    backgroundColor: '#53a6be',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 3,
+    alignItems: 'center',
+    width: 250, // Adjust width as needed
+  },
+  buttonText: {
+    color: '#fff',
+  },
+});
+
+export default FormInputScreen;
+
+
+ProfilecardScreen.js
+
+// ProfileCardScreen.js
+
+// ProfileCardScreen.js
+
+import React from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
+import {Card, Title, Paragraph} from 'react-native-paper';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
+const ProfileCardScreen = ({route, navigation}) => {
+  const {studentData} = route.params;
+
+  const handleEdit = () => {
+    navigation.navigate('EditInputScreen', {studentData});
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content style={styles.cardContent}>
+          <Image
+            source={{
+              uri: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+            }} // Replace with the actual image URL
+            style={styles.image}
+          />
+          <Title style={styles.title}>{studentData.name}</Title>
+          <Paragraph style={styles.subTitle}>Basic Info</Paragraph>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Class:</Text>
+            <Text style={styles.value}>{studentData.selectedClass}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mobile Number:</Text>
+            <Text style={styles.value}>{studentData.mobileNumber}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Data Of Birth:</Text>
+            <Text style={styles.value}>{studentData.dateOfBirth}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Selected Gender:</Text>
+            <Text style={styles.value}>{studentData.selectedGender}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Father's Name:</Text>
+            <Text style={styles.value}>{studentData.fathersName}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Father's Occupation:</Text>
+            <Text style={styles.value}>{studentData.fathersOccupation}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mother's Name:</Text>
+            <Text style={styles.value}>{studentData.mothersName}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Mother's Occupation:</Text>
+            <Text style={styles.value}>{studentData.mothersOccupation}</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Address:</Text>
+            <Text style={styles.value}>{studentData.address}</Text>
+          </View>
+          <Paragraph style={styles.subTitle}>Personal Info</Paragraph>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>E-Mail:</Text>
+            <Text style={styles.value}>1234@gmail.com</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Category:</Text>
+            <Text style={styles.value}>scholarship</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Religion:</Text>
+            <Text style={styles.value}>Hindu</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Birth Place:</Text>
+            <Text style={styles.value}>Chhattisgarh</Text>
+          </View>
+          <View style={styles.infoContainer}>
+            <Text style={styles.label}>Cast:</Text>
+            <Text style={styles.value}>FC</Text>
+          </View>
+        </Card.Content>
+        <TouchableOpacity style={styles.button} onPress={handleEdit}>
+          <Text style={styles.buttonText}>Edit</Text>
+        </TouchableOpacity>
+      </Card>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 10,
+    elevation: 4,
+  },
+  cardContent: {
+    alignItems: 'center',
+  },
+  image: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  subTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+  },
+  label: {
+    flex: 1,
+    fontWeight: 'bold',
+  },
+  value: {
+    flex: 2,
+  },
+  button: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+export default ProfileCardScreen;

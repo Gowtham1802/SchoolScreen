@@ -1,50 +1,78 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   FlatList,
-  TextInput,
   TouchableOpacity,
-  Alert,
   StyleSheet,
+  TextInput,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import FontAwesomeIcon from 'react-native-vector-icons/FontAwesomeIcon';
+// // import {faTrash} from '@fortawesome/free-solid-svg-icons';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
-
-  // Use useRef to create a mutable object for studentData
-  const studentDataRef = useRef([]);
 
   useEffect(() => {
-    loadStudentData();
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
 
-  const loadStudentData = async () => {
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
     try {
-      const storedStudentData = await AsyncStorage.getItem('studentData');
-      if (storedStudentData !== null) {
-        const parsedStudentData = JSON.parse(storedStudentData);
-        studentDataRef.current = parsedStudentData;
-        setFilteredData(parsedStudentData);
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
       }
     } catch (error) {
-      console.error('Error loading student data: ', error);
+      console.error('Error getting student data: ', error);
     }
   };
 
-  const handleEdit = index => {
-    navigation.navigate('FormInputScreen', {
-      studentIndex: index,
-      studentData: studentDataRef.current[index],
-    });
+  const handleViewProfile = student => {
+    navigation.navigate('ProfileCardScreen', {studentData: student});
   };
 
-  const handleDelete = index => {
+  const renderStudentItem = ({item}) => (
+    <View style={styles.itemContainer}>
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handleViewProfile(item)}>
+        <Text style={styles.itemText}>{item.name}</Text>
+        <Text style={styles.itemText}>{item.selectedClass}</Text>
+        <Text style={styles.itemText}>{item.mobileNumber}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteStudent(item.userId)}>
+        <FontAwesome5 name="trash" size={20} color="red" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const handleSearch = () => {
+    // Filter student data based on searchQuery
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return name.includes(query);
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
     Alert.alert(
-      'Confirm Deletion',
-      'Are you sure you want to delete this entry?',
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
       [
         {
           text: 'Cancel',
@@ -52,93 +80,46 @@ const FormDataScreen = ({navigation}) => {
         },
         {
           text: 'Delete',
-          onPress: () => deleteEntry(index),
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
         },
       ],
-      {cancelable: false},
     );
-  };
-
-  const deleteEntry = async index => {
-    try {
-      const updatedData = studentDataRef.current.filter((_, i) => i !== index);
-      await AsyncStorage.setItem('studentData', JSON.stringify(updatedData));
-      studentDataRef.current = updatedData;
-      setFilteredData(updatedData);
-    } catch (error) {
-      console.error('Error deleting entry: ', error);
-    }
-  };
-
-  const handleSearch = query => {
-    setSearchQuery(query);
-    const filtered = studentDataRef.current.filter(student => {
-      return (
-        student.name.toLowerCase().includes(query.toLowerCase()) ||
-        student.mobileNumber.toLowerCase().includes(query.toLowerCase()) ||
-        student.selectedClass.toLowerCase().includes(query.toLowerCase())
-      );
-    });
-    setFilteredData(filtered);
   };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.header}>Student List</Text>
       <TextInput
         style={styles.input}
-        placeholder="Search"
-        onChangeText={handleSearch}
+        placeholder="Search by name"
         value={searchQuery}
+        onChangeText={setSearchQuery}
       />
-      {filteredData.length > 0 ? (
-        <FlatList
-          data={filteredData}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({item, index}) => (
-            <View style={styles.itemContainer}>
-              <Text style={styles.title}>Student List</Text>
-              <Text style={styles.label}>Name: {item.name}</Text>
-              <Text style={styles.label}>
-                Date of Birth: {item.dateOfBirth}
-              </Text>
-              <Text style={styles.label}>
-                Mobile Number: {item.mobileNumber}
-              </Text>
-              <Text style={styles.label}>
-                Father's Name: {item.fathersName}
-              </Text>
-              <Text style={styles.label}>
-                Father's Occupation: {item.fathersOccupation}
-              </Text>
-              <Text style={styles.label}>
-                Mother's Name: {item.mothersName}
-              </Text>
-              <Text style={styles.label}>
-                Mother's Occupation: {item.mothersOccupation}
-              </Text>
-              <Text style={styles.label}>
-                Selected Class: {item.selectedClass}
-              </Text>
-              <Text style={styles.label}>
-                Selected Gender: {item.selectedGender}
-              </Text>
-              <Text style={styles.label}>Address: {item.address}</Text>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => handleEdit(index)}>
-                <Text style={styles.buttonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.button1}
-                onPress={() => handleDelete(index)}>
-                <Text style={styles.buttonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-      ) : (
-        <Text>No matching data found.</Text>
-      )}
+      <FlatList
+        data={handleSearch()} // Render filtered student data
+        renderItem={renderStudentItem}
+        keyExtractor={item => item.userId}
+        contentContainerStyle={
+          studentData.length === 0 && {flexGrow: 1, justifyContent: 'center'}
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No student data found</Text>
+        }
+      />
     </View>
   );
 };
@@ -146,55 +127,51 @@ const FormDataScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
-    backgroundColor: '#fff',
+    padding: 20,
+    backgroundColor: '#f8f8f8',
   },
-  title: {
+  header: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 20,
-    backgroundColor: '#53a6be',
     textAlign: 'center',
-    borderRadius: 10,
-    padding: 5,
-    width: '100%',
   },
   input: {
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
+    borderRadius: 5,
     marginBottom: 10,
     paddingHorizontal: 10,
-    borderRadius: 5,
   },
   itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
   },
-  label: {
+  item: {
+    flex: 1,
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  itemText: {
     fontSize: 16,
-    marginBottom: 5,
   },
-  button: {
-    backgroundColor: '#007bff',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  button1: {
-    backgroundColor: '#dc3545',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 5,
-  },
-  buttonText: {
-    color: '#fff',
+  // deleteButton: {
+  //   backgroundColor: 'red',
+  //   padding: 10,
+  //   borderRadius: 5,
+  // },
+  deleteButtonText: {
+    color: 'white',
     fontWeight: 'bold',
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
   },
 });
 

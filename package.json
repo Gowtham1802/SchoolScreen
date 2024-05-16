@@ -10,6 +10,9 @@
     "test": "jest"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.2",
+    "@fortawesome/free-solid-svg-icons": "^6.5.2",
+    "@fortawesome/react-native-fontawesome": "^0.3.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/datetimepicker": "^8.0.0",
     "@react-native-community/viewpager": "^5.0.1",
@@ -26,6 +29,7 @@
     "react-native-date-picker": "^5.0.2",
     "react-native-datepicker": "^1.7.2",
     "react-native-gesture-handler": "^2.16.1",
+    "react-native-image-picker": "^7.1.2",
     "react-native-pager-view": "^6.3.1",
     "react-native-paper": "^5.12.3",
     "react-native-picker-select": "^9.1.3",

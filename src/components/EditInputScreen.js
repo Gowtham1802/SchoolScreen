@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,64 +11,11 @@ import {
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import DateTimePicker from '@react-native-community/datetimepicker';
-// import {useUpdate} from './UpdateContext'; // Import the useUpdate hook
 
-function generateRandomUserId(length) {
-  const characters = '0123456789';
-  let userId = '';
-  for (let i = 0; i < length; i++) {
-    userId += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return userId;
-}
+const EditInputScreen = ({route, navigation}) => {
+  const {studentData} = route.params;
 
-const FormInputScreen = ({navigation, route}) => {
-  // const {setUpdatedStudent} = useUpdate(); // Use the useUpdate hook
-  const [formData, setFormData] = useState({
-    name: '',
-    dateOfBirth: new Date(),
-    mobileNumber: '',
-    fathersName: '',
-    fathersOccupation: '',
-    mothersName: '',
-    mothersOccupation: '',
-    selectedClass: '',
-    selectedGender: 'Select a Gender',
-    address: '',
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-
-  useEffect(() => {
-    try {
-      const id = route.params?.id;
-
-      if (route.params && route.params.studentData) {
-        // Ensure dateOfBirth is a Date object
-        const studentData = route.params.studentData;
-        studentData.dateOfBirth = studentData.dateOfBirth
-          ? new Date(studentData.dateOfBirth)
-          : new Date();
-        setFormData(studentData);
-      } else {
-        setFormData({
-          name: '',
-          dateOfBirth: new Date(), // Initialize dateOfBirth with a new Date object
-          mobileNumber: '',
-          fathersName: '',
-          fathersOccupation: '',
-          mothersName: '',
-          mothersOccupation: '',
-          selectedClass: '',
-          selectedGender: '',
-          address: '',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  }, [route.params]);
-
+  const [formData, setFormData] = useState({...studentData});
 
   const handleChange = (key, value) => {
     let sanitizedValue = value;
@@ -89,88 +36,6 @@ const FormInputScreen = ({navigation, route}) => {
       ...formData,
       [key]: sanitizedValue,
     });
-  };
-
-  const handleSubmit = async () => {
-    const errors = handleValidation();
-    if (Object.keys(errors).length === 0) {
-      try {
-        const userId = generateRandomUserId(4);
-        const userData = {...formData, userId};
-
-        const existingStudentData = await AsyncStorage.getItem('studentData');
-        let studentData = existingStudentData
-          ? JSON.parse(existingStudentData)
-          : [];
-
-        // console.log(route.params.studentIndex);
-        if (route.params && route.params.studentIndex !== undefined) {
-          // If studentIndex is available, update the data at that index
-          studentData[route.params.studentIndex] = userData;
-        } else {
-          // Otherwise, it's a new entry, so push the data
-          studentData.push(userData);
-        }
-
-        await AsyncStorage.setItem('studentData', JSON.stringify(studentData));
-
-        console.log('FormData:', formData);
-        // console.log('UserData:', userData);
-        // console.log('StudentData:', studentData);
-
-
-        Alert.alert('Success', 'Student data has been successfully submitted', [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.navigate('FormDataScreen');
-            },
-          },
-        ]);
-      } catch (error) {
-        console.error('Error saving form data: ', error);
-      }
-    } else {
-      Alert.alert('Validation Error', Object.values(errors).join('\n'));
-    }
-  };
-
-  const handleGetData = async () => {
-    try {
-      const existingStudentData = await AsyncStorage.getItem('studentData');
-      if (existingStudentData) {
-        const lastEntry = JSON.parse(existingStudentData).pop();
-        if (lastEntry) {
-          setFormData(lastEntry);
-        }
-      } else {
-        alert('No data found');
-      }
-    } catch (error) {
-      console.error('Error getting form data: ', error);
-    }
-  };
-
-  const clearAllData = () => {
-    setFormData({
-      name: '',
-      dateOfBirth: '',
-      mobileNumber: '',
-      fathersName: '',
-      fathersOccupation: '',
-      mothersName: '',
-      mothersOccupation: '',
-      selectedClass: '',
-      selectedGender: '',
-      address: '',
-    });
-  };
-
-  
-  const handleDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || formData.dateOfBirth;
-    setShowDatePicker(false);
-    handleChange('dateOfBirth', currentDate);
   };
 
   const handleValidation = () => {
@@ -209,6 +74,45 @@ const FormInputScreen = ({navigation, route}) => {
     return errors;
   };
 
+  const handleSubmit = async () => {
+    const errors = handleValidation();
+
+    if (Object.keys(errors).length === 0) {
+      try {
+        // Update the student data in AsyncStorage
+        const existingStudentData = await AsyncStorage.getItem('studentData');
+        let studentData = existingStudentData
+          ? JSON.parse(existingStudentData)
+          : [];
+
+        const updatedStudentData = studentData.map(student => {
+          if (student.userId === formData.userId) {
+            return formData;
+          }
+          return student;
+        });
+
+        await AsyncStorage.setItem(
+          'studentData',
+          JSON.stringify(updatedStudentData),
+        );
+
+        Alert.alert('Success', 'Student data has been successfully updated', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('FormDataScreen');
+            },
+          },
+        ]);
+      } catch (error) {
+        console.error('Error updating form data: ', error);
+      }
+    } else {
+      Alert.alert('Validation Error', Object.values(errors).join('\n'));
+    }
+  };
+
   return (
     <ImageBackground
       source={{
@@ -227,12 +131,11 @@ const FormInputScreen = ({navigation, route}) => {
             flexGrow: 1,
             justifyContent: 'flex-start',
             alignItems: 'center',
-            // backgroundColor: 'rgba(255, 255, 255, 0.5)', // Add opacity to background color
             backgroundColor: 'white',
             borderRadius: 15,
             width: '100%',
             padding: 20,
-            gap: 10,
+            gap: 5,
           }}>
           <Text
             style={{
@@ -293,23 +196,13 @@ const FormInputScreen = ({navigation, route}) => {
             </Picker>
           </View>
           <Text style={styles.text3}>Date Of Birth</Text>
-          <TouchableOpacity
+          <TextInput
             style={styles.input}
-            onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.inputText}>
-              {formData.dateOfBirth
-                ? formData.dateOfBirth.toLocaleDateString()
-                : 'Select date'}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={new Date()}
-              mode="date"
-              display="default"
-              onChange={handleDateChange}
-            />
-          )}
+            placeholder="Date of Birth (DD-MM-YYYY)"
+            onChangeText={text => handleChange('dateOfBirth', text)}
+            value={formData.dateOfBirth}
+            keyboardType="numeric"
+          />
           <Text style={styles.text4}>Mobile Number</Text>
           <TextInput
             style={styles.input}
@@ -362,25 +255,12 @@ const FormInputScreen = ({navigation, route}) => {
             value={formData.address}
             multiline={true}
           />
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              onPress={handleSubmit}
-              style={[styles.button, {backgroundColor: '#04b58a'}]}>
-              <Text style={styles.buttonText}>Submit</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={clearAllData}
-              style={[styles.button, {backgroundColor: 'red'}]}>
-              <Text style={styles.buttonText}>Clear Data</Text>
-            </TouchableOpacity>
-
-            {/* <TouchableOpacity
-              onPress={handleGetData}
-              style={[styles.button, {backgroundColor: '#04b58a'}]}>
-              <Text style={styles.buttonText}>Get Data</Text>
-            </TouchableOpacity> */}
-          </View>
+          {/* Other input fields */}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            style={[styles.button, {backgroundColor: '#04b58a'}]}>
+            <Text style={styles.buttonText}>Update</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ImageBackground>
@@ -395,9 +275,9 @@ const styles = StyleSheet.create({
   },
   text: {
     position: 'absolute',
-    width: 50,
+    width: 52,
     left: 32,
-    top: 82,
+    top: 77,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -407,7 +287,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 48,
     left: 32,
-    top: 163,
+    top: 151,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -417,7 +297,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 60,
     left: 32,
-    top: 242,
+    top: 226,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -427,7 +307,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 102,
     left: 32,
-    top: 323,
+    top: 302,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -437,7 +317,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 119,
     left: 32,
-    top: 402,
+    top: 376,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -447,7 +327,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 116,
     left: 32,
-    top: 482,
+    top: 452,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -457,7 +337,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 156,
     left: 32,
-    top: 562,
+    top: 526,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -467,7 +347,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 120,
     left: 32,
-    top: 642,
+    top: 601,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -477,7 +357,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 160,
     left: 32,
-    top: 722,
+    top: 676,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -487,21 +367,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 66,
     left: 32,
-    top: 802,
+    top: 752,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
     textAlign: 'center',
-  },
-  touch: {
-    height: 50,
-    marginVertical: 10,
-    padding: 15,
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#018c6a',
   },
   input: {
     height: 50,
@@ -517,8 +387,6 @@ const styles = StyleSheet.create({
     height: 50,
     marginVertical: 10,
     textAlign: 'center',
-    // marginBottom: 1,
-    // padding: 1,
     width: '100%',
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -529,24 +397,17 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 5,
-  },
   button: {
     backgroundColor: '#53a6be',
     padding: 10,
     borderRadius: 5,
     marginVertical: 3,
-    textAlign: 'center',
     alignItems: 'center',
-    width: 100, // Adjust width as needed
+    width: 250, // Adjust width as needed
   },
   buttonText: {
     color: '#fff',
-    fontSize: 15,
   },
 });
 
-export default FormInputScreen;
+export default EditInputScreen;
