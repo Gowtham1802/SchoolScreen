@@ -5,12 +5,12 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  StatusBar,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import FontAwesomeIcon from 'react-native-vector-icons/FontAwesomeIcon';
-// // import {faTrash} from '@fortawesome/free-solid-svg-icons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 const FormDataScreen = ({navigation}) => {
@@ -42,29 +42,54 @@ const FormDataScreen = ({navigation}) => {
     navigation.navigate('ProfileCardScreen', {studentData: student});
   };
 
-  const renderStudentItem = ({item}) => (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity
-        style={styles.item}
-        onPress={() => handleViewProfile(item)}>
-        <Text style={styles.itemText}>{item.name}</Text>
-        <Text style={styles.itemText}>{item.selectedClass}</Text>
-        <Text style={styles.itemText}>{item.mobileNumber}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDeleteStudent(item.userId)}>
-        <FontAwesome5 name="trash" size={20} color="red" />
-      </TouchableOpacity>
-    </View>
-  );
+  const renderStudentItem = ({item}) => {
+    const genderImage =
+      item.selectedGender.toLowerCase() === 'male'
+        ? 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f'
+        : 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+
+    return (
+      <View style={styles.itemContainer}>
+        <StatusBar backgroundColor="#344968" barStyle="light-content" />
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => handleViewProfile(item)}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{
+                uri: genderImage,
+              }}
+              style={styles.avatar}
+            />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.itemClass}>
+              {item.selectedClass} - {item.selectedSection}
+            </Text>
+            <Text style={styles.itemMobile}>{item.mobileNumber}</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteStudent(item.userId)}>
+          <FontAwesome5 name="trash" size={20} color="red" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const handleSearch = () => {
-    // Filter student data based on searchQuery
     const filteredData = studentData.filter(student => {
       const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
       const query = searchQuery.toLowerCase();
-      return name.includes(query);
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
     });
     return filteredData;
   };
@@ -102,17 +127,18 @@ const FormDataScreen = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Student List</Text>
+      {/* <Text style={styles.header}>Student List</Text> */}
       <TextInput
         style={styles.input}
-        placeholder="Search by name"
+        placeholder="Search by name, class, or mobile number"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
       <FlatList
-        data={handleSearch()} // Render filtered student data
+        data={handleSearch()}
         renderItem={renderStudentItem}
         keyExtractor={item => item.userId}
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={
           studentData.length === 0 && {flexGrow: 1, justifyContent: 'center'}
         }
@@ -149,24 +175,43 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 10,
+    padding: 5,
   },
   item: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
   },
-  itemText: {
+  avatarContainer: {
+    marginRight: 10,
+  },
+  avatar: {
+    width: 60,
+    height: 66,
+    borderRadius: 5,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  itemName: {
     fontSize: 16,
-  },
-  // deleteButton: {
-  //   backgroundColor: 'red',
-  //   padding: 10,
-  //   borderRadius: 5,
-  // },
-  deleteButtonText: {
-    color: 'white',
     fontWeight: 'bold',
+    color: 'black',
+  },
+  itemClass: {
+    fontSize: 14,
+    color: 'green',
+  },
+  itemMobile: {
+    fontSize: 14,
+    color: '#3dad97',
+  },
+  deleteButton: {
+    marginLeft: 20,
+    right: 5,
   },
   emptyText: {
     textAlign: 'center',

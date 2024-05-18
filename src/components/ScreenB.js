@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: 'white',
     textAlign: 'center',
+    fontFamily: 'DancingScript-SemiBold',
   },
   text: {
     color: 'black',

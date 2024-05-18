@@ -4530,3 +4530,2620 @@ const styles = StyleSheet.create({
 });
 
 export default ProfileCardScreen;
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  ImageBackground,
+} from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+
+const EditInputScreen = ({ route, navigation }) => {
+  const { studentData } = route.params;
+
+  const [formData, setFormData] = useState({
+    ...studentData,
+    dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth) : null,
+  });
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [age, setAge] = useState('');
+
+  useEffect(() => {
+    // Calculate age when component mounts
+    if (formData.dateOfBirth) {
+      const age = calculateAge(formData.dateOfBirth);
+      setAge(age);
+    }
+  }, []);
+
+  const handleChange = (key, value) => {
+    let sanitizedValue = value;
+
+    if (['name', 'fathersName', 'fathersOccupation', 'mothersName', 'mothersOccupation'].includes(key)) {
+      sanitizedValue = value.replace(/[^a-zA-Z .]/g, '');
+    }
+
+    setFormData({
+      ...formData,
+      [key]: sanitizedValue,
+    });
+
+    if (key === 'dateOfBirth') {
+      setAge(calculateAge(value));
+    }
+  };
+
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
+
+  const handleValidation = () => {
+    const errors = {};
+
+    if (!formData.name) {
+      errors.name = 'Name is required';
+    }
+    if (!formData.selectedClass) {
+      errors.selectedClass = 'Class is required';
+    }
+    if (!formData.selectedSection) {
+      errors.selectedSection = 'Section is required';
+    }
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = 'Date of Birth is required';
+    }
+    if (!formData.mobileNumber) {
+      errors.mobileNumber = 'Mobile Number is required';
+    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      errors.mobileNumber = 'Mobile Number must be 10 digits';
+    }
+    if (!formData.selectedGender) {
+      errors.selectedGender = 'Gender is required';
+    }
+    if (!formData.fathersName) {
+      errors.fathersName = "Father's Name is required";
+    }
+    if (!formData.fathersOccupation) {
+      errors.fathersOccupation = "Father's Occupation is required";
+    }
+    if (!formData.mothersName) {
+      errors.mothersName = "Mother's Name is required";
+    }
+    if (!formData.mothersOccupation) {
+      errors.mothersOccupation = "Mother's Occupation is required";
+    }
+    if (!formData.address) {
+      errors.address = 'Address is required';
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async () => {
+    const errors = handleValidation();
+
+    if (Object.keys(errors).length === 0) {
+      try {
+        // Update the student data in AsyncStorage
+        const existingStudentData = await AsyncStorage.getItem('studentData');
+        let studentData = existingStudentData ? JSON.parse(existingStudentData) : [];
+
+        const updatedStudentData = studentData.map(student => {
+          if (student.userId === formData.userId) {
+            return formData;
+          }
+          return student;
+        });
+
+        await AsyncStorage.setItem('studentData', JSON.stringify(updatedStudentData));
+
+        Alert.alert('Success', 'Student data has been successfully updated', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('FormDataScreen');
+            },
+          },
+        ]);
+      } catch (error) {
+        console.error('Error updating form data: ', error);
+      }
+    } else {
+      Alert.alert('Validation Error', Object.values(errors).join('\n'));
+    }
+  };
+
+  const handleDateConfirm = (selectedDate) => {
+    setDatePickerVisibility(false);
+    handleChange('dateOfBirth', selectedDate);
+  };
+
+  const formatDate = (date) => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return 'DD/MM/YYYY'; // Return default value for invalid dates
+    }
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  return (
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1572355286138-8dae8e7ba20d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      }}
+      style={styles.backgroundImage}>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        }}>
+        <View
+          style={{
+            flexGrow: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            backgroundColor: 'white',
+            borderRadius: 15,
+            width: '100%',
+            padding: 20,
+            gap: 5,
+          }}>
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              marginBottom: 10,
+              backgroundColor: '#018c6a',
+              color: '#fff',
+              textAlign: 'center',
+              padding: 5,
+              width: '100%',
+              borderRadius: 10,
+            }}>
+            Enter Update Details
+          </Text>
+          <Text style={styles.text}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            onChangeText={text => handleChange('name', text)}
+            value={formData.name}
+          />
+          <View style={styles.classContainer}>
+            <Text style={styles.text1}>Class</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedClass}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedClass', itemValue)
+                }>
+                <Picker.Item label="Select Class" value="" />
+                <Picker.Item label="I" value="I" />
+                <Picker.Item label="II" value="II" />
+                <Picker.Item label="III" value="III" />
+                <Picker.Item label="IV" value="IV" />
+                <Picker.Item label="V" value="V" />
+                <Picker.Item label="VI" value="VI" />
+                <Picker.Item label="VII" value="VII" />
+                <Picker.Item label="VIII" value="VIII" />
+                <Picker.Item label="IX" value="IX" />
+                <Picker.Item label="X" value="X" />
+                <Picker.Item label="XI" value="XI" />
+                <Picker.Item label="XII" value="XII" />
+                {/* Add other classes as needed */}
+              </Picker>
+            </View>
+            <Text style={styles.text10}>Section</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedSection}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedSection', itemValue)
+                }>
+                <Picker.Item label="Select a Section" value="" />
+                <Picker.Item label="A" value="A" />
+                <Picker.Item label="B" value="B" />
+                <Picker.Item label="C" value="C" />
+                <Picker.Item label="D" value="D" />
+              </Picker>
+            </View>
+          </View>
+          <Text style={styles.text2}>Gender</Text>
+          <View style={styles.input1}>
+            <Picker
+              selectedValue={formData.selectedGender}
+              onValueChange={(itemValue, itemIndex) =>
+                handleChange('selectedGender', itemValue)
+              }>
+              <Picker.Item label="Select a Gender" value="" />
+              <Picker.Item label="Male" value="Male" />
+              <Picker.Item label="Female" value="Female" />
+            </Picker>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.text}>Date of Birth</Text>
+            <TouchableOpacity
+              style={styles.input}
+              onPress={() => setDatePickerVisibility(true)}
+            >
+              <Text>{formatDate(formData.dateOfBirth)}</Text>
+            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              date={formData.dateOfBirth}
+              onConfirm={handleDateConfirm}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+            <Text style={styles.text}>Age</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Age"
+              value={age.toString()}
+              editable={false}
+            />
+          </View>
+          <Text style={styles.text4}>Mobile Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mobile Number"
+            onChangeText={text => {
+              // Remove any non-numeric characters from the input
+              const numericValue = text.replace(/\D/g, '');
+              // Check if the input contains 10 digits or less
+              if (numericValue.length <= 10) {
+                // Update the mobileNumber state with the sanitized value
+                handleChange('mobileNumber', numericValue);
+              }
+            }}
+            value={formData.mobileNumber} // Numeric keyboard
+          />
+          <Text style={styles.text5}>Father's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Name"
+            onChangeText={text => handleChange('fathersName', text)}
+            value={formData.fathersName}
+          />
+          <Text style={styles.text6}>Father's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Occupation"
+            onChangeText={text => handleChange('fathersOccupation', text)}
+            value={formData.fathersOccupation}
+          />
+          <Text style={styles.text7}>Mother's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Name"
+            onChangeText={text => handleChange('mothersName', text)}
+            value={formData.mothersName}
+          />
+          <Text style={styles.text8}>Mother's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Occupation"
+            onChangeText={text => handleChange('mothersOccupation', text)}
+            value={formData.mothersOccupation}
+          />
+
+          <Text style={styles.text9}>Address</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Address"
+            onChangeText={text => handleChange('address', text)}
+            value={formData.address}
+            multiline={true}
+          />
+          {/* Other form fields */}
+          <TouchableOpacity
+            onPress={handleSubmit}
+            style={[styles.button, { backgroundColor: '#04b58a' }]}
+          >
+            <Text style={styles.buttonText}>Update</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </ImageBackground>
+  );
+};
+
+const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+  },
+  text: {
+    position: 'absolute',
+    width: 52,
+    left: 32,
+    top: 77,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text1: {
+    position: 'absolute',
+    width: 48,
+    left: 12,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text10: {
+    position: 'absolute',
+    width: 60,
+    left: 172,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text11: {
+    position: 'absolute',
+    width: 36,
+    left: 232,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text2: {
+    position: 'absolute',
+    width: 60,
+    left: 32,
+    top: 226,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text3: {
+    position: 'absolute',
+    width: 102,
+    left: 12,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text4: {
+    position: 'absolute',
+    width: 119,
+    left: 32,
+    top: 376,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text5: {
+    position: 'absolute',
+    width: 116,
+    left: 32,
+    top: 452,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text6: {
+    position: 'absolute',
+    width: 156,
+    left: 32,
+    top: 526,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text7: {
+    position: 'absolute',
+    width: 120,
+    left: 32,
+    top: 601,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text8: {
+    position: 'absolute',
+    width: 160,
+    left: 32,
+    top: 676,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text9: {
+    position: 'absolute',
+    width: 66,
+    left: 32,
+    top: 752,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  input: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  input1: {
+    height: 50,
+    marginVertical: 10,
+    textAlign: 'center',
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  input2: {
+    height: 50,
+    marginVertical: 10,
+    textAlign: 'center',
+    gap: 10,
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  input3: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    gap: 10,
+    width: '67%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  input4: {
+    height: 50,
+    marginVertical: 10,
+    gap: 10,
+    width: '30%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+  },
+  classContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  button: {
+    backgroundColor: '#53a6be',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 3,
+    alignItems: 'center',
+    width: 250, // Adjust width as needed
+  },
+  buttonText: {
+    color: '#fff',
+  },
+});
+
+export default EditInputScreen;
+
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  StatusBar,
+  ImageBackground,
+} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import FormDataScreen from './FormDataScreen';
+import {createStackNavigator} from '@react-navigation/stack';
+import {useNavigation} from '@react-navigation/native';
+
+
+const Stack = createStackNavigator();
+
+function generateRandomUserId(length) {
+  const characters = '0123456789';
+  let userId = '';
+  for (let i = 0; i < length; i++) {
+    userId += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return userId;
+}
+
+
+
+const FormInputScreen = ({navigation, route}) => {
+  // const {setUpdatedStudent} = useUpdate(); // Use the useUpdate hook
+  // const navigation = useNavigation();
+  const [formData, setFormData] = useState({
+    name: '',
+    dateOfBirth: '',
+    mobileNumber: '',
+    fathersName: '',
+    fathersOccupation: '',
+    mothersName: '',
+    mothersOccupation: '',
+    selectedClass: '',
+    selectedSection: '',
+    selectedGender: 'Select a Gender',
+    address: '',
+  });
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [age, setAge] = useState('');
+  
+
+ useEffect(() => {
+   try {
+     const id = route.params?.id;
+
+     if (route.params && route.params.studentData) {
+       // Ensure dateOfBirth is a Date object
+       const studentData = route.params.studentData;
+       studentData.dateOfBirth = studentData.dateOfBirth
+         ? new Date(studentData.dateOfBirth)
+         : new Date();
+       setFormData(studentData);
+       setAge(calculateAge(studentData.dateOfBirth));
+     } else {
+       // Initialize form with empty fields
+       setFormData({
+         name: '',
+         dateOfBirth: '', // Empty dateOfBirth
+         mobileNumber: '',
+         fathersName: '',
+         fathersOccupation: '',
+         mothersName: '',
+         mothersOccupation: '',
+         selectedClass: '',
+         selectedSection: '',
+         selectedGender: '',
+         address: '',
+       });
+     }
+   } catch (error) {
+     console.error('Error fetching data:', error);
+   }
+ }, [route.params]);
+
+
+const formatDate = date => {
+  if (!date || date === '') {
+    return 'DD/MM/YYYY'; // Return default value if date is empty
+  }
+
+  const parsedDate = new Date(date);
+
+  if (!(parsedDate instanceof Date) || isNaN(parsedDate.getTime())) {
+    return 'Invalid Date';
+  }
+
+  const day = parsedDate.getDate().toString().padStart(2, '0');
+  const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
+  const year = parsedDate.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+
+
+  const handleChange = (key, value) => {
+    let sanitizedValue = value;
+
+    if (
+      [
+        'name',
+        'fathersName',
+        'fathersOccupation',
+        'mothersName',
+        'mothersOccupation',
+      ].includes(key)
+    ) {
+      sanitizedValue = value.replace(/[^a-zA-Z .]/g, '');
+    }
+
+    setFormData({
+      ...formData,
+      [key]: sanitizedValue,
+    });
+  };
+
+  const handleSubmit = async () => {
+    const errors = handleValidation();
+    if (Object.keys(errors).length === 0) {
+      try {
+        const userId = generateRandomUserId(4);
+        const userData = {...formData, userId};
+
+        const existingStudentData = await AsyncStorage.getItem('studentData');
+        let studentData = existingStudentData
+          ? JSON.parse(existingStudentData)
+          : [];
+
+        // console.log(route.params.studentIndex);
+        if (route.params && route.params.studentIndex !== undefined) {
+          // If studentIndex is available, update the data at that index
+          studentData[route.params.studentIndex] = userData;
+        } else {
+          // Otherwise, it's a new entry, so push the data
+          studentData.push(userData);
+        }
+
+        await AsyncStorage.setItem('studentData', JSON.stringify(studentData));
+
+        console.log('FormData:', formData);
+        // console.log('UserData:', userData);
+        // console.log('StudentData:', studentData);
+
+
+        Alert.alert('Success', 'Student data has been successfully submitted', [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('FormDataScreen');
+            },
+          },
+        ]);
+      } catch (error) {
+        console.error('Error saving form data: ', error);
+      }
+    } else {
+      Alert.alert('Validation Error', Object.values(errors).join('\n'));
+    }
+  };
+
+  const handleGetData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        const lastEntry = JSON.parse(existingStudentData).pop();
+        if (lastEntry) {
+          setFormData(lastEntry);
+          // Calculate age based on the retrieved date of birth
+          const age = calculateAge(new Date(lastEntry.dateOfBirth));
+          setAge(age);
+        }
+      } else {
+        alert('No data found');
+      }
+    } catch (error) {
+      console.error('Error getting form data: ', error);
+    }
+  };
+
+  const clearAllData = () => {
+    setFormData({
+      name: '',
+      dateOfBirth: '', // Reset date of birth to a new Date object
+      mobileNumber: '',
+      fathersName: '',
+      fathersOccupation: '',
+      mothersName: '',
+      mothersOccupation: '',
+      selectedClass: '',
+      selectedSection: '',
+      selectedGender: '',
+      address: '',
+    });
+    setAge('');
+  };
+
+  
+  const handleDateConfirm = selectedDate => {
+    setDatePickerVisibility(false);
+    handleChange('dateOfBirth', selectedDate);
+    setAge(calculateAge(selectedDate));
+    hideDatePicker();
+  };
+
+  const handleValidation = () => {
+    const errors = {};
+
+    if (!formData.name) {
+      errors.name = 'Name is required';
+    }
+    if (!formData.selectedClass) {
+      errors.name = 'Class is required';
+    }
+     if (!formData.selectedSection) {
+       errors.name = 'Section is required';
+     }
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = 'Date of Birth is required';
+    }
+    if (!formData.mobileNumber) {
+      errors.mobileNumber = 'Mobile Number is required';
+    } else if (!/^\d{10}$/.test(formData.mobileNumber)) {
+      errors.mobileNumber = 'Mobile Number must be 10 digits';
+    }
+    if (!formData.selectedGender) {
+      errors.selectedGender = 'Gender is required';
+    }
+    if (!formData.fathersName) {
+      errors.fathersName = "Father's Name is required";
+    }
+    if (!formData.fathersOccupation) {
+      errors.fathersOccupation = "Father's Occupation is required";
+    }
+    if (!formData.mothersName) {
+      errors.mothersName = "Mother's Name is required";
+    }
+    if (!formData.mothersOccupation) {
+      errors.mothersOccupation = "Mother's Occupation is required";
+    }
+    if (!formData.address) {
+      errors.address = 'Address is required';
+    }
+
+    return errors;
+  };
+
+
+ const calculateAge = dob => {
+   const birthDate = new Date(dob);
+   const today = new Date();
+   let age = today.getFullYear() - birthDate.getFullYear();
+   const monthDifference = today.getMonth() - birthDate.getMonth();
+   if (
+     monthDifference < 0 ||
+     (monthDifference === 0 && today.getDate() < birthDate.getDate())
+   ) {
+     age--;
+   }
+   return age;
+ };
+
+  return (
+    <>
+      <StatusBar backgroundColor="#344968" barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: 20,
+        }}>
+        <View
+          style={{
+            flexGrow: 1,
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            // backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            backgroundColor: 'white',
+            borderRadius: 15,
+            width: '100%',
+            padding: 20,
+            gap: 10,
+          }}>
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: 'bold',
+              marginBottom: 10,
+              backgroundColor: '#344968',
+              color: '#fff',
+              textAlign: 'center',
+              padding: 5,
+              width: '100%',
+              borderRadius: 10,
+            }}>
+            Enter Your Details
+          </Text>
+          <Text style={styles.text}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            onChangeText={text => handleChange('name', text)}
+            value={formData.name}
+          />
+          <View style={styles.classContainer}>
+            <Text style={styles.text1}>Class</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedClass}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedClass', itemValue)
+                }>
+                <Picker.Item label="Select Class" value="" />
+                <Picker.Item label="I" value="I" />
+                <Picker.Item label="II" value="II" />
+                <Picker.Item label="III" value="III" />
+                <Picker.Item label="IV" value="IV" />
+                <Picker.Item label="V" value="V" />
+                <Picker.Item label="VI" value="VI" />
+                <Picker.Item label="VII" value="VII" />
+                <Picker.Item label="VIII" value="VIII" />
+                <Picker.Item label="IX" value="IX" />
+                <Picker.Item label="X" value="X" />
+                <Picker.Item label="XI" value="XI" />
+                <Picker.Item label="XII" value="XII" />
+                {/* Add other classes as needed */}
+              </Picker>
+            </View>
+            <Text style={styles.text10}>Section</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedSection}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedSection', itemValue)
+                }>
+                <Picker.Item label="Select a Section" value="" />
+                <Picker.Item label="A" value="A" />
+                <Picker.Item label="B" value="B" />
+                <Picker.Item label="C" value="C" />
+                <Picker.Item label="D" value="D" />
+              </Picker>
+            </View>
+          </View>
+          <Text style={styles.text2}>Gender</Text>
+          <View style={styles.input1}>
+            <Picker
+              selectedValue={formData.selectedGender}
+              onValueChange={(itemValue, itemIndex) =>
+                handleChange('selectedGender', itemValue)
+              }>
+              <Picker.Item label="Select a Gender" value="" />
+              <Picker.Item label="Male" value="Male" />
+              <Picker.Item label="Female" value="Female" />
+            </Picker>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.text3}>Date of Birth</Text>
+            <TouchableOpacity
+              style={styles.input3}
+              onPress={() => setDatePickerVisibility(true)}>
+              <Text>{formatDate(formData.dateOfBirth)}</Text>
+            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              date={
+                formData.dateOfBirth instanceof Date
+                  ? formData.dateOfBirth
+                  : new Date()
+              }
+              onConfirm={handleDateConfirm}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+            <Text style={styles.text11}>Age</Text>
+            <TextInput
+              style={styles.input4}
+              placeholder="Age"
+              value={age.toString()}
+              editable={false}
+            />
+          </View>
+          <Text style={styles.text4}>Mobile Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mobile Number"
+            onChangeText={text => {
+              // Remove any non-numeric characters from the input
+              const numericValue = text.replace(/\D/g, '');
+              // Check if the input contains 10 digits or less
+              if (numericValue.length <= 10) {
+                // Update the mobileNumber state with the sanitized value
+                handleChange('mobileNumber', numericValue);
+              }
+            }}
+            value={formData.mobileNumber} // Numeric keyboard
+          />
+          <Text style={styles.text5}>Father's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Name"
+            onChangeText={text => handleChange('fathersName', text)}
+            value={formData.fathersName}
+          />
+          <Text style={styles.text6}>Father's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Father's Occupation"
+            onChangeText={text => handleChange('fathersOccupation', text)}
+            value={formData.fathersOccupation}
+          />
+          <Text style={styles.text7}>Mother's Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Name"
+            onChangeText={text => handleChange('mothersName', text)}
+            value={formData.mothersName}
+          />
+          <Text style={styles.text8}>Mother's Occupation</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Mother's Occupation"
+            onChangeText={text => handleChange('mothersOccupation', text)}
+            value={formData.mothersOccupation}
+          />
+
+          <Text style={styles.text9}>Address</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Address"
+            onChangeText={text => handleChange('address', text)}
+            value={formData.address}
+            multiline={true}
+          />
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              style={[styles.button, {backgroundColor: '#344968'}]}>
+              <Text style={styles.buttonText}>Submit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={clearAllData}
+              style={[styles.button, {backgroundColor: 'red'}]}>
+              <Text style={styles.buttonText}>Clear Data</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleGetData}
+              style={[styles.button, {backgroundColor: '#344968'}]}>
+              <Text style={styles.buttonText}>Get Data</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+      {/* <Stack.Navigator>
+        <Stack.Screen
+          name="FormDataScreen"
+          component={FormDataScreen}
+          options={{headerShown: false}} // Hide header for FormDataScreen
+        />
+        <Stack.Screen
+          name="FormInputScreen"
+          component={FormInputScreen}
+          options={({navigation}) => ({
+            headerStyle: {
+              height: 100, // Adjust the height as needed
+              backgroundColor: '#344968',
+            },
+            headerTitleStyle: {
+              color: 'white',
+              fontSize: 24, // Adjust the font size as needed
+            },
+            headerTitleAlign: 'center', // Center align the header text
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('FormDataScreen')}>
+                <FontAwesome5
+                  name="chevron-left"
+                  size={40}
+                  color="white"
+                  style={{marginLeft: 15}}
+                />
+              </TouchableOpacity>
+            ),
+          })}
+        />
+      </Stack.Navigator> */}
+    </>
+  );
+};
+
+FormInputScreen.navigationOptions = ({navigation}) => ({
+  headerStyle: {
+    height: 100, // Adjust the height as needed
+    backgroundColor: '#344968',
+  },
+  headerTitleStyle: {
+    color: 'white',
+    fontSize: 24, // Adjust the font size as needed
+  },
+  headerTitleAlign: 'center', // Center align the header text
+  headerLeft: () => (
+    <TouchableOpacity onPress={() => navigation.navigate('FormDataScreen')}>
+      <FontAwesome5
+        name="chevron-left"
+        size={40}
+        color="white"
+        style={{marginLeft: 15}}
+      />
+    </TouchableOpacity>
+  ),
+});
+
+const styles = StyleSheet.create({
+  // backgroundImage: {
+  //   flex: 1,
+  //   resizeMode: 'cover',
+  //   justifyContent: 'center',
+  // },
+  text: {
+    position: 'absolute',
+    width: 50,
+    left: 32,
+    top: 82,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text1: {
+    position: 'absolute',
+    width: 48,
+    left: 12,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text10: {
+    position: 'absolute',
+    width: 60,
+    left: 172,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text11: {
+    position: 'absolute',
+    width: 36,
+    left: 232,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text2: {
+    position: 'absolute',
+    width: 60,
+    left: 32,
+    top: 242,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text3: {
+    position: 'absolute',
+    width: 102,
+    left: 12,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text4: {
+    position: 'absolute',
+    width: 119,
+    left: 32,
+    top: 402,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text5: {
+    position: 'absolute',
+    width: 116,
+    left: 32,
+    top: 482,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text6: {
+    position: 'absolute',
+    width: 156,
+    left: 32,
+    top: 562,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text7: {
+    position: 'absolute',
+    width: 120,
+    left: 32,
+    top: 642,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text8: {
+    position: 'absolute',
+    width: 160,
+    left: 32,
+    top: 722,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text9: {
+    position: 'absolute',
+    width: 66,
+    left: 32,
+    top: 802,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  touch: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input1: {
+    height: 50,
+    marginVertical: 10,
+    textAlign: 'center',
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input2: {
+    height: 50,
+    marginVertical: 10,
+    textAlign: 'center',
+    gap: 10,
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input3: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    gap: 10,
+    width: '67%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input4: {
+    height: 50,
+    marginVertical: 10,
+    gap: 10,
+    width: '30%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  classContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 5,
+  },
+  button: {
+    backgroundColor: '#53a6be',
+    padding: 10,
+    borderRadius: 5,
+    marginVertical: 3,
+    textAlign: 'center',
+    alignItems: 'center',
+    width: 100, // Adjust width as needed
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+});
+
+export default FormInputScreen;
+
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleViewProfile = student => {
+    navigation.navigate('ProfileCardScreen', {studentData: student});
+  };
+
+  const renderStudentItem = ({item}) => (
+    <View style={styles.itemContainer}>
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => handleViewProfile(item)}>
+        <View style={styles.avatarContainer}>
+          {item.avatar ? (
+            <Image source={{uri: item.avatar}} style={styles.avatar} />
+          ) : (
+            <FontAwesome5 name="user-circle" size={40} color="gray" />
+          )}
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.itemName}>{item.name}</Text>
+          <Text style={styles.itemClass}>
+            {item.selectedClass} - {item.selectedSection}
+          </Text>
+          <Text style={styles.itemMobile}>{item.mobileNumber}</Text>
+        </View>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteStudent(item.userId)}>
+        <FontAwesome5 name="trash" size={20} color="red" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const handleSearch = () => {
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Student List</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Search by name, class, or mobile number"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <FlatList
+        data={handleSearch()}
+        renderItem={renderStudentItem}
+        keyExtractor={item => item.userId}
+        contentContainerStyle={
+          studentData.length === 0 && {flexGrow: 1, justifyContent: 'center'}
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No student data found</Text>
+        }
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#018c6a',
+    borderRadius: 5,
+    padding: 10,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    marginRight: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  itemClass: {
+    fontSize: 14,
+    color: 'gray',
+  },
+  itemMobile: {
+    fontSize: 14,
+    color: 'blue',
+  },
+  deleteButton: {
+    marginLeft: 10,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
+});
+
+export default FormDataScreen;
+
+'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+
+
+
+
+import 'react-native-gesture-handler';
+import React from 'react';
+import {NavigationContainer} from '@react-navigation/native';
+import {createStackNavigator} from '@react-navigation/stack';
+import FormScreen from './src/components/FormScreen';
+import DisplayScreen from './src/components/DisplayScreen';
+import FormInputScreen from './src/components/FormInputScreen';
+import FormDataScreen from './src/components/FormDataScreen';
+import DataFilterScreen from './src/components/ProfileCardScreen';
+import ProfileCardScreen from './src/components/ProfileCardScreen';
+import EditInputScreen from './src/components/EditInputScreen';
+import StudentDetailsScreen from './src/components/StudentDetailsScreen';
+import {TouchableOpacity, Text} from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const Stack = createStackNavigator();
+
+const App = () => {
+  return (
+    // <NavigationContainer>
+    //   <Stack.Navigator initialRouteName="Students List">
+    //     <Stack.Screen
+    //       name="FormScreen"
+    //       component={FormScreen}
+    //       options={{headerShown: false}}
+    //     />
+    //     <Stack.Screen
+    //       name="Students List"
+    //       component={DisplayScreen}
+    //       options={({navigation}) => ({
+    //         headerShown: true,
+    //         headerRight: () => (
+    //           <TouchableOpacity
+    //             style={{
+    //               marginRight: 10,
+    //               backgroundColor: 'green',
+    //               padding: 8,
+    //               borderRadius: 5,
+    //             }}
+    //             onPress={() => navigation.navigate('FormScreen')}>
+    //             <Text style={{color: 'white'}}>Add New</Text>
+    //           </TouchableOpacity>
+    //         ),
+    //       })}
+    //     />
+    //   </Stack.Navigator>
+    // </NavigationContainer>
+
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="FormDataScreen">
+        <Stack.Screen
+          name="FormInputScreen"
+          component={FormInputScreen}
+          options={{
+            headerStyle: {
+              height: 80, // Adjust the height as needed
+              backgroundColor: '#344968',
+            },
+            headerTitleStyle: {
+              color: 'white',
+              fontSize: 24, // Adjust the font size as needed
+            },
+            headerTitleAlign: 'center', // Center align the header text
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('FormDataScreen')}>
+                <FontAwesome5
+                  name="chevron-left"
+                  size={40}
+                  color="white"
+                  style={{marginLeft: 15}}
+                />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="ProfileCardScreen"
+          component={ProfileCardScreen}
+          options={{headerShown: true}}
+        />
+        <Stack.Screen
+          name="EditInputScreen"
+          component={EditInputScreen}
+          options={{
+            headerStyle: {
+              height: 80, // Adjust the height as needed
+              backgroundColor: '#344968',
+            },
+            headerTitleStyle: {
+              color: 'white',
+              fontSize: 24, // Adjust the font size as needed
+            },
+            headerTitleAlign: 'center', // Center align the header text
+            headerLeft: () => (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ProfileCardScreen')}>
+                <FontAwesome5
+                  name="chevron-left"
+                  size={40}
+                  color="white"
+                  style={{marginLeft: 15}}
+                />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+
+        <Stack.Screen
+          name="FormDataScreen"
+          component={FormDataScreen}
+          options={({navigation}) => ({
+            headerShown: true,
+            headerRight: () => (
+              <TouchableOpacity
+                style={{
+                  marginRight: 10,
+                  backgroundColor: 'green',
+                  padding: 8,
+                  borderRadius: 5,
+                }}
+                onPress={() => navigation.navigate('FormInputScreen' + '')}>
+                <Text style={{color: 'white'}}>Add New</Text>
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        {/* <Stack.Screen
+          name="StudentDetailsScreen"
+          component={StudentDetailsScreen}
+          options={{headerShown: false}}
+        /> */}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+};
+
+export default App;
+
+
+// Completed Full Codes In FormDataScreen.js
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleViewProfile = student => {
+    navigation.navigate('ProfileCardScreen', {studentData: student});
+  };
+
+  const renderStudentItem = ({item}) => {
+    const genderImage =
+      item.selectedGender.toLowerCase() === 'male'
+        ? 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f'
+        : 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+
+    return (
+      <View style={styles.itemContainer}>
+        <StatusBar backgroundColor="#344968" barStyle="light-content" />
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => handleViewProfile(item)}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={{
+                uri: genderImage,
+              }}
+              style={styles.avatar}
+            />
+          </View>
+          <View style={styles.textContainer}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.itemClass}>
+              {item.selectedClass} - {item.selectedSection}
+            </Text>
+            <Text style={styles.itemMobile}>{item.mobileNumber}</Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteStudent(item.userId)}>
+          <FontAwesome5 name="trash" size={20} color="red" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const handleSearch = () => {
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* <Text style={styles.header}>Student List</Text> */}
+      <TextInput
+        style={styles.input}
+        placeholder="Search by name, class, or mobile number"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <FlatList
+        data={handleSearch()}
+        renderItem={renderStudentItem}
+        keyExtractor={item => item.userId}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          studentData.length === 0 && {flexGrow: 1, justifyContent: 'center'}
+        }
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>No student data found</Text>
+        }
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  header: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 10,
+    padding: 5,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarContainer: {
+    marginRight: 10,
+  },
+  avatar: {
+    width: 60,
+    height: 66,
+    borderRadius: 5,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  itemClass: {
+    fontSize: 14,
+    color: 'green',
+  },
+  itemMobile: {
+    fontSize: 14,
+    color: '#3dad97',
+  },
+  deleteButton: {
+    marginLeft: 20,
+    right: 5,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
+  },
+});
+
+export default FormDataScreen;
+
+
+// FormDataScreen Table Formate Function Codes 
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleSearch = () => {
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  const handleEditStudent = student => {
+    navigation.navigate('EditInputScreen', {studentData: student});
+  };
+
+  return (
+    <ScrollView style={styles.container} nestedScrollEnabled>
+      <TextInput
+        style={styles.input}
+        placeholder="Search by name, class, or mobile number"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <ScrollView horizontal nestedScrollEnabled>
+        <View>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, {width: 60}]}>Avatar</Text>
+            <Text style={[styles.tableHeaderText, {width: 150}]}>Name</Text>
+            <Text style={[styles.tableHeaderText, {width: 120}]}>Class</Text>
+            <Text style={[styles.tableHeaderText, {width: 150}]}>
+              Mobile Number
+            </Text>
+            <Text style={[styles.tableHeaderText, {width: 80}]}>Edit</Text>
+            <Text style={[styles.tableHeaderText, {width: 80}]}>Delete</Text>
+          </View>
+          {handleSearch().length === 0 ? (
+            <Text style={styles.emptyText}>No student data found</Text>
+          ) : (
+            handleSearch().map((item, index) => {
+              const genderImage =
+                item.selectedGender.toLowerCase() === 'male'
+                  ? 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f'
+                  : 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+              return (
+                <View key={item.userId} style={styles.tableRow}>
+                  <View style={[styles.tableCell, {width: 60}]}>
+                    <Image source={{uri: genderImage}} style={styles.avatar} />
+                  </View>
+                  <Text style={[styles.tableCell, {width: 150}]}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.tableCell, {width: 120}]}>
+                    {item.selectedClass} - {item.selectedSection}
+                  </Text>
+                  <Text style={[styles.tableCell, {width: 150}]}>
+                    {item.mobileNumber}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.tableCell, {width: 80}]}
+                    onPress={() => handleEditStudent(item)}>
+                    <FontAwesome5 name="edit" size={20} color="blue" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.tableCell, {width: 80}]}
+                    onPress={() => handleDeleteStudent(item.userId)}>
+                    <FontAwesome5 name="trash" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#344968',
+    paddingVertical: 10,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  tableHeaderText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+  },
+  tableCell: {
+    // justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'gray',
+    textAlign: 'center',
+    // top: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 5,
+    padding: 10,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+});
+
+export default FormDataScreen;
+
+
+//part - 2
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const FormDataScreen = ({navigation}) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleViewProfile = student => {
+    navigation.navigate('ProfileCardScreen', {studentData: student});
+  };
+
+  const handleSearch = () => {
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        placeholder="Search by name, class, or mobile number"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <ScrollView horizontal>
+        <View>
+          <View style={styles.tableHeader}>
+            <Text
+              style={[
+                styles.tableHeaderText,
+                styles.tableColumn,
+                {width: 100},
+              ]}>
+              Avatar
+            </Text>
+            <Text
+              style={[
+                styles.tableHeaderText,
+                styles.tableColumn,
+                {width: 150},
+              ]}>
+              Name
+            </Text>
+            <Text
+              style={[
+                styles.tableHeaderText,
+                styles.tableColumn,
+                {width: 100},
+              ]}>
+              Class
+            </Text>
+            <Text
+              style={[
+                styles.tableHeaderText,
+                styles.tableColumn,
+                {width: 150},
+              ]}>
+              Mobile Number
+            </Text>
+            <Text
+              style={[
+                styles.tableHeaderText,
+                styles.tableColumn,
+                {width: 100},
+              ]}>
+              Action
+            </Text>
+          </View>
+          {handleSearch().length === 0 ? (
+            <Text style={styles.emptyText}>No student data found</Text>
+          ) : (
+            handleSearch().map((item, index) => {
+              const genderImage =
+                item.selectedGender.toLowerCase() === 'male'
+                  ? 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f'
+                  : 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+              return (
+                <View key={item.userId} style={styles.tableRow}>
+                  <View style={[styles.tableCell, {width: 100}]}>
+                    <Image source={{uri: genderImage}} style={styles.avatar} />
+                  </View>
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      styles.tableColumn,
+                      {width: 150},
+                    ]}>
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      styles.tableColumn,
+                      {width: 100},
+                    ]}>
+                    {item.selectedClass} - {item.selectedSection}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tableCell,
+                      styles.tableColumn,
+                      {width: 150},
+                    ]}>
+                    {item.mobileNumber}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.tableCell, styles.tableColumn, {width: 100}]}
+                    onPress={() => handleDeleteStudent(item.userId)}>
+                    <FontAwesome5 name="trash" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#344968',
+    paddingVertical: 10,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  tableHeaderText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tableColumn: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    textAlign: 'center',
+    paddingVertical: 10,
+  },
+  tableRow: {
+    flexDirection: 'row',
+  },
+  tableCell: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 5,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+});
+
+export default FormDataScreen;
+
+
+// Default and Alternative FormDataScreen.js Codes
+
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+  Alert,
+  Image,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+
+const FormDataScreen = ({ navigation }) => {
+  const [studentData, setStudentData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentView, setCurrentView] = useState('default');
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      getStudentData();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const getStudentData = async () => {
+    try {
+      const existingStudentData = await AsyncStorage.getItem('studentData');
+      if (existingStudentData) {
+        setStudentData(JSON.parse(existingStudentData));
+      } else {
+        setStudentData([]);
+      }
+    } catch (error) {
+      console.error('Error getting student data: ', error);
+    }
+  };
+
+  const handleSearch = () => {
+    const filteredData = studentData.filter(student => {
+      const name = student.name.toLowerCase();
+      const selectedClass = student.selectedClass.toLowerCase();
+      const mobileNumber = student.mobileNumber.toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return (
+        name.includes(query) ||
+        selectedClass.includes(query) ||
+        mobileNumber.includes(query)
+      );
+    });
+    return filteredData;
+  };
+
+  const handleDeleteStudent = async userId => {
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to delete this student?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              const updatedStudentData = studentData.filter(
+                student => student.userId !== userId,
+              );
+              await AsyncStorage.setItem(
+                'studentData',
+                JSON.stringify(updatedStudentData),
+              );
+              setStudentData(updatedStudentData);
+            } catch (error) {
+              console.error('Error deleting student data: ', error);
+            }
+          },
+          style: 'destructive',
+        },
+      ],
+    );
+  };
+
+  const handleEditStudent = student => {
+    navigation.navigate('EditInputScreen', { studentData: student });
+  };
+
+  const renderDefaultTable = () => {
+    return (
+      <ScrollView horizontal nestedScrollEnabled>
+        <View>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, { width: 60 }]}>Avatar</Text>
+            <Text style={[styles.tableHeaderText, { width: 150 }]}>Name</Text>
+            <Text style={[styles.tableHeaderText, { width: 120 }]}>Class</Text>
+            <Text style={[styles.tableHeaderText, { width: 150 }]}>Mobile Number</Text>
+            <Text style={[styles.tableHeaderText, { width: 80 }]}>Edit</Text>
+            <Text style={[styles.tableHeaderText, { width: 80 }]}>Delete</Text>
+          </View>
+          {handleSearch().length === 0 ? (
+            <Text style={styles.emptyText}>No student data found</Text>
+          ) : (
+            handleSearch().map((item, index) => {
+              const genderImage =
+                item.selectedGender.toLowerCase() === 'male'
+                  ? 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f'
+                  : 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+              return (
+                <View key={item.userId} style={styles.tableRow}>
+                  <View style={[styles.tableCell, { width: 60 }]}>
+                    <Image source={{ uri: genderImage }} style={styles.avatar} />
+                  </View>
+                  <Text style={[styles.tableCell, { width: 150 }]}>{item.name}</Text>
+                  <Text style={[styles.tableCell, { width: 120 }]}>{item.selectedClass} - {item.selectedSection}</Text>
+                  <Text style={[styles.tableCell, { width: 150 }]}>{item.mobileNumber}</Text>
+                  <TouchableOpacity
+                    style={[styles.tableCell, { width: 80 }]}
+                    onPress={() => handleEditStudent(item)}>
+                    <FontAwesome5 name="edit" size={20} color="blue" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.tableCell, { width: 80 }]}
+                    onPress={() => handleDeleteStudent(item.userId)}>
+                    <FontAwesome5 name="trash" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const renderAlternativeTable = () => {
+    return (
+      <ScrollView horizontal nestedScrollEnabled>
+        <View>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, { width: 100 }]}>Name</Text>
+            <Text style={[styles.tableHeaderText, { width: 120 }]}>Class</Text>
+            <Text style={[styles.tableHeaderText, { width: 150 }]}>Mobile Number</Text>
+            <Text style={[styles.tableHeaderText, { width: 100 }]}>Gender</Text>
+            <Text style={[styles.tableHeaderText, { width: 80 }]}>Edit</Text>
+            <Text style={[styles.tableHeaderText, { width: 80 }]}>Delete</Text>
+          </View>
+          {handleSearch().length === 0 ? (
+            <Text style={styles.emptyText}>No student data found</Text>
+          ) : (
+            handleSearch().map((item, index) => {
+              return (
+                <View key={item.userId} style={styles.tableRow}>
+                  <Text style={[styles.tableCell, { width: 100 }]}>{item.name}</Text>
+                  <Text style={[styles.tableCell, { width: 120 }]}>{item.selectedClass} - {item.selectedSection}</Text>
+                  <Text style={[styles.tableCell, { width: 150 }]}>{item.mobileNumber}</Text>
+                  <Text style={[styles.tableCell, { width: 100 }]}>{item.selectedGender}</Text>
+                  <TouchableOpacity
+                    style={[styles.tableCell, { width: 80 }]}
+                    onPress={() => handleEditStudent(item)}>
+                    <FontAwesome5 name="edit" size={20} color="blue" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.tableCell, { width: 80 }]}
+                    onPress={() => handleDeleteStudent(item.userId)}>
+                    <FontAwesome5 name="trash" size={20} color="red" />
+                  </TouchableOpacity>
+                </View>
+              );
+            })
+          )}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.switchView}>
+        <TouchableOpacity
+          style={[styles.switchButton, currentView === 'default' && styles.activeButton]}
+          onPress={() => setCurrentView('default')}>
+          <Text style={styles.switchButtonText}>Default View</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.switchButton, currentView === 'alternative' && styles.activeButton]}
+          onPress={() => setCurrentView('alternative')}>
+          <Text style={styles.switchButtonText}>Alternative View</Text>
+        </TouchableOpacity>
+      </View>
+      {currentView === 'default' ? renderDefaultTable() : renderAlternativeTable()}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#344968',
+    paddingVertical: 10,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  tableHeaderText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingVertical: 10,
+  },
+  tableCell: {
+    flex: 1,
+    textAlign: 'center',
+    paddingVertical: 5,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+  },
+  emptyText: {
+    textAlign: 'center',
+    fontSize: 16,
+    fontStyle: 'italic',
+    marginTop: 20,
+  },
+  switchView: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  switchButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#ccc',
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  activeButton: {
+    backgroundColor: '#344968',
+  },
+  switchButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
+
+export default FormDataScreen;
+

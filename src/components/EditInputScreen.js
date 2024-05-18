@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,15 +7,32 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
+  StatusBar,
   ImageBackground,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const EditInputScreen = ({route, navigation}) => {
   const {studentData} = route.params;
 
-  const [formData, setFormData] = useState({...studentData});
+  const [formData, setFormData] = useState({
+    ...studentData,
+    dateOfBirth: studentData.dateOfBirth
+      ? new Date(studentData.dateOfBirth)
+      : null,
+  });
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [age, setAge] = useState('');
+
+  useEffect(() => {
+    // Calculate age when component mounts
+    if (formData.dateOfBirth) {
+      const age = calculateAge(formData.dateOfBirth);
+      setAge(age);
+    }
+  }, []);
 
   const handleChange = (key, value) => {
     let sanitizedValue = value;
@@ -36,6 +53,24 @@ const EditInputScreen = ({route, navigation}) => {
       ...formData,
       [key]: sanitizedValue,
     });
+
+    if (key === 'dateOfBirth') {
+      setAge(calculateAge(value));
+    }
+  };
+
+  const calculateAge = dob => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age;
   };
 
   const handleValidation = () => {
@@ -43,6 +78,12 @@ const EditInputScreen = ({route, navigation}) => {
 
     if (!formData.name) {
       errors.name = 'Name is required';
+    }
+    if (!formData.selectedClass) {
+      errors.selectedClass = 'Class is required';
+    }
+    if (!formData.selectedSection) {
+      errors.selectedSection = 'Section is required';
     }
     if (!formData.dateOfBirth) {
       errors.dateOfBirth = 'Date of Birth is required';
@@ -113,18 +154,33 @@ const EditInputScreen = ({route, navigation}) => {
     }
   };
 
+  const handleDateConfirm = selectedDate => {
+    setDatePickerVisibility(false);
+    handleChange('dateOfBirth', selectedDate);
+  };
+
+  const formatDate = date => {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return 'DD/MM/YYYY'; // Return default value for invalid dates
+    }
+
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
-    <ImageBackground
-      source={{
-        uri: 'https://images.unsplash.com/photo-1572355286138-8dae8e7ba20d?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-      }}
-      style={styles.backgroundImage}>
+    <>
+      <StatusBar backgroundColor="#344968" barStyle="light-content" />
       <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 20,
+          padding: 10,
+          backgroundColor: 'lightgray',
         }}>
         <View
           style={{
@@ -132,7 +188,7 @@ const EditInputScreen = ({route, navigation}) => {
             justifyContent: 'flex-start',
             alignItems: 'center',
             backgroundColor: 'white',
-            borderRadius: 15,
+            borderRadius: 7,
             width: '100%',
             padding: 20,
             gap: 5,
@@ -142,14 +198,14 @@ const EditInputScreen = ({route, navigation}) => {
               fontSize: 24,
               fontWeight: 'bold',
               marginBottom: 10,
-              backgroundColor: '#018c6a',
+              backgroundColor: '#344968',
               color: '#fff',
               textAlign: 'center',
               padding: 5,
               width: '100%',
               borderRadius: 10,
             }}>
-            Enter Your Details
+            Enter Update Details
           </Text>
           <Text style={styles.text}>Name</Text>
           <TextInput
@@ -158,30 +214,44 @@ const EditInputScreen = ({route, navigation}) => {
             onChangeText={text => handleChange('name', text)}
             value={formData.name}
           />
-          <Text style={styles.text1}>Class</Text>
-          <View style={styles.input1}>
-            <Picker
-              selectedValue={formData.selectedClass}
-              onValueChange={(itemValue, itemIndex) =>
-                handleChange('selectedClass', itemValue)
-              }>
-              <Picker.Item label="Select a Class" value="" />
-              <Picker.Item label="LKG" value="LKG" />
-              <Picker.Item label="UKG" value="UKG" />
-              <Picker.Item label="1st" value="1st" />
-              <Picker.Item label="2nd" value="2nd" />
-              <Picker.Item label="3rd" value="3rd" />
-              <Picker.Item label="4th" value="4th" />
-              <Picker.Item label="5th" value="5th" />
-              <Picker.Item label="6th" value="6th" />
-              <Picker.Item label="7th" value="7th" />
-              <Picker.Item label="8th" value="8th" />
-              <Picker.Item label="9th" value="9th" />
-              <Picker.Item label="10th" value="10th" />
-              <Picker.Item label="11th" value="11th" />
-              <Picker.Item label="12th" value="12th" />
-              {/* Add other classes as needed */}
-            </Picker>
+          <View style={styles.classContainer}>
+            <Text style={styles.text1}>Class</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedClass}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedClass', itemValue)
+                }>
+                <Picker.Item label="Select Class" value="" />
+                <Picker.Item label="I" value="I" />
+                <Picker.Item label="II" value="II" />
+                <Picker.Item label="III" value="III" />
+                <Picker.Item label="IV" value="IV" />
+                <Picker.Item label="V" value="V" />
+                <Picker.Item label="VI" value="VI" />
+                <Picker.Item label="VII" value="VII" />
+                <Picker.Item label="VIII" value="VIII" />
+                <Picker.Item label="IX" value="IX" />
+                <Picker.Item label="X" value="X" />
+                <Picker.Item label="XI" value="XI" />
+                <Picker.Item label="XII" value="XII" />
+                {/* Add other classes as needed */}
+              </Picker>
+            </View>
+            <Text style={styles.text10}>Section</Text>
+            <View style={styles.input2}>
+              <Picker
+                selectedValue={formData.selectedSection}
+                onValueChange={(itemValue, itemIndex) =>
+                  handleChange('selectedSection', itemValue)
+                }>
+                <Picker.Item label="Select a Section" value="" />
+                <Picker.Item label="A" value="A" />
+                <Picker.Item label="B" value="B" />
+                <Picker.Item label="C" value="C" />
+                <Picker.Item label="D" value="D" />
+              </Picker>
+            </View>
           </View>
           <Text style={styles.text2}>Gender</Text>
           <View style={styles.input1}>
@@ -195,18 +265,33 @@ const EditInputScreen = ({route, navigation}) => {
               <Picker.Item label="Female" value="Female" />
             </Picker>
           </View>
-          <Text style={styles.text3}>Date Of Birth</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Date of Birth (DD-MM-YYYY)"
-            onChangeText={text => handleChange('dateOfBirth', text)}
-            value={formData.dateOfBirth}
-            keyboardType="numeric"
-          />
+          <View style={styles.dateContainer}>
+            <Text style={styles.text3}>Date of Birth</Text>
+            <TouchableOpacity
+              style={styles.input3}
+              onPress={() => setDatePickerVisibility(true)}>
+              <Text>{formatDate(formData.dateOfBirth)}</Text>
+            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={isDatePickerVisible}
+              mode="date"
+              date={formData.dateOfBirth}
+              onConfirm={handleDateConfirm}
+              onCancel={() => setDatePickerVisibility(false)}
+            />
+            <Text style={styles.text11}>Age</Text>
+            <TextInput
+              style={styles.input4}
+              placeholder="Age"
+              value={age.toString()}
+              editable={false}
+            />
+          </View>
           <Text style={styles.text4}>Mobile Number</Text>
           <TextInput
             style={styles.input}
             placeholder="Mobile Number"
+            keyboardType="numeric"
             onChangeText={text => {
               // Remove any non-numeric characters from the input
               const numericValue = text.replace(/\D/g, '');
@@ -255,15 +340,15 @@ const EditInputScreen = ({route, navigation}) => {
             value={formData.address}
             multiline={true}
           />
-          {/* Other input fields */}
+          {/* Other form fields */}
           <TouchableOpacity
             onPress={handleSubmit}
-            style={[styles.button, {backgroundColor: '#04b58a'}]}>
+            style={[styles.button, {backgroundColor: '#344968'}]}>
             <Text style={styles.buttonText}>Update</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </>
   );
 };
 
@@ -286,8 +371,28 @@ const styles = StyleSheet.create({
   text1: {
     position: 'absolute',
     width: 48,
-    left: 32,
-    top: 151,
+    left: 12,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text10: {
+    position: 'absolute',
+    width: 60,
+    left: 172,
+    top: -2,
+    fontSize: 15,
+    backgroundColor: '#fff',
+    zIndex: 1,
+    textAlign: 'center',
+  },
+  text11: {
+    position: 'absolute',
+    width: 36,
+    left: 232,
+    top: -2,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -306,8 +411,8 @@ const styles = StyleSheet.create({
   text3: {
     position: 'absolute',
     width: 102,
-    left: 32,
-    top: 302,
+    left: 12,
+    top: -2,
     fontSize: 15,
     backgroundColor: '#fff',
     zIndex: 1,
@@ -381,7 +486,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#018c6a',
+    borderColor: '#DDE3EC',
   },
   input1: {
     height: 50,
@@ -391,7 +496,49 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#018c6a',
+    borderColor: '#DDE3EC',
+  },
+  input2: {
+    height: 50,
+    marginVertical: 10,
+    textAlign: 'center',
+    gap: 10,
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input3: {
+    height: 50,
+    marginVertical: 10,
+    padding: 15,
+    gap: 10,
+    width: '67%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  input4: {
+    height: 50,
+    marginVertical: 10,
+    gap: 10,
+    width: '30%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#DDE3EC',
+  },
+  classContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
   },
   textArea: {
     height: 100,
