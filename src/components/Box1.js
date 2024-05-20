@@ -77,10 +77,11 @@ const Box1 = ({title, imageSource, navigation}) => {
 
 const styles = StyleSheet.create({
   container: {
-    width: 105,
+    width: 100,
     height: 100,
     backgroundColor: 'white',
-    margin: 8,
+    margin: 9,
+    left: 5,
     padding: 5,
     justifyContent: 'center',
     alignItems: 'center',

@@ -7147,3 +7147,470 @@ const styles = StyleSheet.create({
 
 export default FormDataScreen;
 
+
+
+import * as React from 'react';
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  Image,
+  RefreshControl,
+} from 'react-native';
+import Box1 from '../../src/components/Box1';
+
+const ScrollList1 = ({navigation}) => {
+  const [refreshing, setRefreshing] = React.useState(false);
+  // console.log(navigation);
+
+  const data = [
+    {
+      id: '1',
+      title: 'Message',
+      imageSource: require('../../assets/Box-Images/notification-bell.png'),
+    },
+    {
+      id: '2',
+      title: 'Attendance',
+      imageSource: require('../../assets/Box-Images/attendance.png'),
+    },
+    {
+      id: '3',
+      title: 'Portfolio',
+      imageSource: require('../../assets/Box-Images/portfolio.png'),
+    },
+    {
+      id: '4',
+      title: 'Homework',
+      imageSource: require('../../assets/Box-Images/homework.png'),
+    },
+    {
+      id: '5',
+      title: 'Fees Payment',
+      imageSource: require('../../assets/Box-Images/fees.png'),
+    },
+    {
+      id: '6',
+      title: 'Notes',
+      imageSource: require('../../assets/Box-Images/notes.png'),
+    },
+    {
+      id: '7',
+      title: 'Diary / Events',
+      imageSource: require('../../assets/Box-Images/diary.png'),
+    },
+    {
+      id: '8',
+      title: 'Time Table',
+      imageSource: require('../../assets/Box-Images/timetable.png'),
+    },
+    {
+      id: '9',
+      title: 'Exam Marks',
+      imageSource: require('../../assets/Box-Images/exammarks.png'),
+    },
+    {
+      id: '10',
+      title: 'Calendar Events',
+      imageSource: require('../../assets/Box-Images/calendar.png'),
+    },
+    {
+      id: '11',
+      title: 'Meal Menu',
+      imageSource: require('../../assets/Box-Images/mealmenu.png'),
+    },
+    {
+      id: '12',
+      title: 'Documents',
+      imageSource: require('../../assets/Box-Images/documents.png'),
+    },
+    {
+      id: '13',
+      title: 'Chat',
+      imageSource: require('../../assets/Box-Images/live-chat.png'),
+    },
+    {
+      id: '14',
+      title: 'Transport',
+      imageSource: require('../../assets/Box-Images/transportation.png'),
+    },
+    {
+      id: '15',
+      title: 'Health Card',
+      imageSource: require('../../assets/Box-Images/healthcard.png'),
+    },
+    {
+      id: '16',
+      title: 'My Learning',
+      imageSource: require('../../assets/Box-Images/learning.png'),
+    },
+    {
+      id: '17',
+      title: 'Syllabus',
+      imageSource: require('../../assets/Box-Images/syllabus.png'),
+    },
+    {
+      id: '18',
+      title: 'Photo and Videos',
+      imageSource: require('../../assets/Box-Images/photo&video.png'),
+    },
+  ];
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500);
+  };
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={data}
+        keyExtractor={item => item.id}
+        numColumns={3}
+        showsVerticalScrollIndicator={false}
+        renderItem={({item}) => (
+          <Box1
+            title={item.title}
+            imageSource={item.imageSource}
+            navigation={navigation}
+          />
+        )}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
+
+      <View style={styles.box}>
+        <View>
+          <Text style={styles.title}>Start Online Class</Text>
+          <TouchableOpacity
+            // Navigate to ScreenA
+            style={styles.button}>
+            <Text style={styles.text}>Continue</Text>
+          </TouchableOpacity>
+        </View>
+        <Image
+          source={require('../../assets/onlineclass.png')}
+          style={styles.image}
+        />
+      </View>
+    </View>
+  );
+};
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#CCE6FF',
+  },
+  box: {
+    width: '90%',
+    height: 100,
+    backgroundColor: 'white',
+    margin: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  title: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  button: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  text: {
+    textAlign: 'center',
+    color: 'white',
+  },
+  image: {
+    width: 120,
+    height: 100,
+  },
+});
+
+export default ScrollList1;
+
+
+
+//Photo Adjust Codes for ProfileCardScreen.js
+
+
+import React from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  ScrollView,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
+import {Card, Title, Paragraph} from 'react-native-paper';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import moment from 'moment';
+
+// Custom component for rendering each section
+const InfoSection = ({label, value, selected}) => (
+  <View style={[styles.infoContainer, selected && styles.selectedSection]}>
+    <Text style={[styles.label, selected && styles.selectedLabel]}>
+      {label}
+    </Text>
+    <Text style={[styles.value, selected && styles.selectedValue]}>
+      {value}
+    </Text>
+  </View>
+);
+
+const ProfileCardScreen = ({route, navigation}) => {
+  const {studentData} = route.params;
+
+  // Function to calculate age based on date of birth
+  const calculateAge = dob => {
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const month = today.getMonth() - birthDate.getMonth();
+    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Function to get the picture URI based on selected gender
+  const getPictureUri = gender => {
+    if (gender === 'Male') {
+      return 'https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=996&t=st=1716015895~exp=1716016495~hmac=8a75d1ef9eb00a0173acacf4fd5e54206a62f694f877e41cdbd84f6b56c8d87f';
+    } else if (gender === 'Female') {
+      return 'https://img.freepik.com/free-photo/young-beautiful-woman-pink-warm-sweater-natural-look-smiling-portrait-isolated-long-hair_285396-896.jpg?t=st=1716016890~exp=1716020490~hmac=b82593c7c19116ca7f2e2d447d0484417132a846d0b861c43fd0b6e11708446c&w=996';
+    } else {
+      return 'https://example.com/default-picture.jpg';
+    }
+  };
+
+  return (
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}>
+      <StatusBar backgroundColor="#344968" barStyle="light-content" />
+      <Card style={styles.card}>
+        <View style={styles.header}>
+          <View style={styles.smallCard}>
+            <Image
+              source={{
+                uri: getPictureUri(studentData.selectedGender),
+              }}
+              style={styles.image}
+            />
+            <View style={styles.mainTitle}>
+              <Title style={styles.title}>{studentData.name}</Title>
+              <Title style={styles.title1}>
+                {studentData.selectedClass} - {studentData.selectedSection}
+              </Title>
+            </View>
+          </View>
+        </View>
+        <Card.Content style={styles.cardContent}>
+          <Paragraph style={styles.subTitle}>Basic Info</Paragraph>
+          <InfoSection
+            label="Class                       :"
+            value={studentData.selectedClass}
+            selected={false}
+          />
+          <InfoSection
+            label="Section                    :"
+            value={studentData.selectedSection}
+            selected={false}
+          />
+          <InfoSection
+            label="Mobile Number         :"
+            value={studentData.mobileNumber}
+            selected={false}
+          />
+          <InfoSection
+            label="Date Of Birth            :"
+            value={new Date(studentData.dateOfBirth).toLocaleDateString()}
+            selected={false}
+          />
+          <InfoSection
+            label="Age                          :"
+            value={calculateAge(studentData.dateOfBirth)}
+            selected={false}
+          />
+          <InfoSection
+            label="Selected Gender       :"
+            value={studentData.selectedGender}
+            selected={false}
+          />
+          <InfoSection
+            label="Father's Name          :"
+            value={studentData.fathersName}
+            selected={false}
+          />
+          <InfoSection
+            label="Father's Occupation  :"
+            value={studentData.fathersOccupation}
+            selected={false}
+          />
+          <InfoSection
+            label="Mother's Name         :"
+            value={studentData.mothersName}
+            selected={false}
+          />
+          <InfoSection
+            label="Mother's Occupation :"
+            value={studentData.mothersOccupation}
+            selected={false}
+          />
+          <InfoSection
+            label="Address                   :"
+            value={studentData.address}
+            selected={true}
+          />
+          {/* <Text style={styles.line}></Text>
+          <Paragraph style={styles.subTitle1}>Personal Info</Paragraph>
+          <InfoSection
+            label="E-Mail                      :"
+            value={studentData.email}
+            selected={false}
+          />
+          <InfoSection
+            label="Category                  :"
+            value={studentData.category}
+            selected={false}
+          />
+          <InfoSection
+            label="Religion                    :"
+            value={studentData.religion}
+            selected={false}
+          />
+          <InfoSection
+            label="Birth Place               :"
+            value={studentData.birthPlace}
+            selected={false}
+          />
+          <InfoSection
+            label="Cast                         :"
+            value={studentData.cast}
+            selected={true}
+          /> */}
+        </Card.Content>
+      </Card>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 15,
+  },
+  card: {
+    width: '100%',
+    borderRadius: 10,
+    elevation: 4,
+  },
+  header: {
+    width: '100%',
+    position: 'relative',
+  },
+  smallCard: {
+    backgroundColor: '#344968',
+    width: '100%',
+    borderTopRightRadius: 10,
+    borderTopLeftRadius: 10,
+    alignItems: 'center',
+    padding: 10,
+    flexDirection: 'row',
+  },
+  cardContent: {
+    alignItems: 'center',
+  },
+  image: {
+    width: 80,
+    height: 80,
+    borderRadius: 50,
+    borderWidth: 0.2,
+    borderColor: '#fff',
+    marginBottom: 10,
+    top: 5,
+    left: 20,
+    backgroundColor: 'black',
+  },
+  mainTitle: {
+    // gap: 10,
+    top: 8,
+    left: 50,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#ffffff',
+  },
+  title1: {
+    fontSize: 20,
+    // fontWeight: 'bold',
+    marginBottom: 1,
+    color: '#ffffff',
+    bottom: 18,
+    left: 3,
+  },
+  subTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+    color: '#344968',
+    marginTop: 30,
+    fontFamily: 'DancingScript-SemiBold',
+  },
+  subTitle1: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    alignSelf: 'flex-start',
+    color: '#344968',
+    marginTop: 30,
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    marginVertical: 5,
+    alignItems: 'center',
+  },
+  line: {
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: 'lightgray',
+  },
+  selectedSection: {},
+  label: {
+    flex: 1,
+    fontWeight: 'bold',
+    paddingRight: 5,
+    color: 'black',
+  },
+  selectedLabel: {},
+  value: {
+    flex: 1,
+    textAlign: 'left',
+    paddingLeft: 5,
+  },
+  selectedValue: {},
+});
+
+export default ProfileCardScreen;

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import {
   View,
   FlatList,
@@ -12,7 +12,6 @@ import Box1 from '../../src/components/Box1';
 
 const ScrollList1 = ({navigation}) => {
   const [refreshing, setRefreshing] = React.useState(false);
-  // console.log(navigation);
 
   const data = [
     {
@@ -131,35 +130,38 @@ const ScrollList1 = ({navigation}) => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-      />
+        ListFooterComponent={
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
 
-      <View style={styles.box}>
-        <View>
-          <Text style={styles.title}>Start Online Class</Text>
-          <TouchableOpacity
-            // Navigate to ScreenA
-            style={styles.button}>
-            <Text style={styles.text}>Continue</Text>
-          </TouchableOpacity>
-        </View>
-        <Image
-          source={require('../../assets/onlineclass.png')}
-          style={styles.image}
-        />
-      </View>
+            <Image
+              source={require('../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        }
+      />
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#CCE6FF',
   },
-  box: {
-    width: '90%',
+  footerContainer: {
+    width: '94%',
     height: 100,
+    // left: 10,
     backgroundColor: 'white',
     margin: 10,
     flexDirection: 'row',
@@ -167,11 +169,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
-  title: {
+  footerTitle: {
     fontSize: 18,
     color: '#00004F',
   },
-  button: {
+  footerButton: {
     width: 90,
     backgroundColor: '#516f9c',
     padding: 5,
@@ -179,11 +181,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     textAlign: 'center',
   },
-  text: {
-    textAlign: 'center',
+  footerButtonText: {
     color: 'white',
+    textAlign: 'center',
   },
-  image: {
+  footerImage: {
     width: 120,
     height: 100,
   },

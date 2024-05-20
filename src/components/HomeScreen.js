@@ -19,6 +19,11 @@ import {green} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import {
+  createDrawerNavigator,
+  DrawerContentScrollView,
+  DrawerItemList,
+} from '@react-navigation/drawer';
 // import {createDrawerNavigator} from '@react-navigation/drawer';
 import ScreenA from '../../src/components/ScreenA';
 import ScreenB from '../../src/components/ScreenB';

@@ -13,6 +13,7 @@ import {
 import {Picker} from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import moment from 'moment';
 
 const EditInputScreen = ({route, navigation}) => {
   const {studentData} = route.params;
@@ -168,7 +169,7 @@ const EditInputScreen = ({route, navigation}) => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-based
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
-  };
+  }; 
 
   return (
     <>

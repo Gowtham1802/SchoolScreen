@@ -12,6 +12,7 @@ import FormDataScreen from './src/components/FormDataScreen';
 import ProfileCardScreen from './src/components/ProfileCardScreen';
 import EditInputScreen from './src/components/EditInputScreen';
 import StudentDetailsScreen from './src/components/StudentDetailsScreen';
+import moment from 'moment';
 
 const Stack = createStackNavigator();
 
@@ -163,3 +164,25 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+// import 'react-native-gesture-handler';
+// import {GestureHandlerRootView} from 'react-native-gesture-handler';
+// 
+// const App = () => {
+//   return (
+//     <GestureHandlerRootView style={{flex: 1}}>
+//       <NavigationContainer>
+//         <Drawer.Navigator initialRouteName="Home">
+//           <Drawer.Screen name="Home" component={HomeScreen} />
+//           <Drawer.Screen name="About" component={ScreenA} />
+//           <Drawer.Screen name="Other" component={ScreenB} />
+//         </Drawer.Navigator>
+//       </NavigationContainer>
+//     </GestureHandlerRootView>
+//   );
+// };
+// 
+// export default App;

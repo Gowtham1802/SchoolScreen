@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {Card, Title, Paragraph} from 'react-native-paper';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import moment from 'moment';
 
 // Custom component for rendering each section
 const InfoSection = ({label, value, selected}) => (
@@ -123,7 +124,7 @@ const ProfileCardScreen = ({route, navigation}) => {
             value={studentData.address}
             selected={true}
           />
-          <Text style={styles.line}></Text>
+          {/* <Text style={styles.line}></Text>
           <Paragraph style={styles.subTitle1}>Personal Info</Paragraph>
           <InfoSection
             label="E-Mail                      :"
@@ -149,7 +150,7 @@ const ProfileCardScreen = ({route, navigation}) => {
             label="Cast                         :"
             value={studentData.cast}
             selected={true}
-          />
+          /> */}
         </Card.Content>
       </Card>
     </ScrollView>
