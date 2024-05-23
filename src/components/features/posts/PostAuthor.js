@@ -1,21 +1,15 @@
 import React from 'react';
-import {useSelector} from 'react-redux';
-import {selectAllUsers} from '../users/usersSlice';
-import {View, Text, StyleSheet} from 'react-native';
+import { useSelector } from 'react-redux';
+import { Text, StyleSheet } from 'react-native';
+import { selectAllUsers } from '../users/usersSlice';
 
-const PostAuthor = ({userId}) => {
+const PostAuthor = ({ userId }) => {
   const users = useSelector(selectAllUsers);
-
   const author = users.find(user => user.id === userId);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.text}>
-        By {author ? author.name : 'Unknown Author'}
-      </Text>
-    </View>
-  );
+  return <Text>By {author ? author.name : 'Unknown Author'}</Text>;
 };
+
 
 const styles = StyleSheet.create({
   container: {

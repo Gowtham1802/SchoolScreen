@@ -1,8 +1,8 @@
 import React from 'react';
-import {Text, StyleSheet} from 'react-native';
-import {parseISO, formatDistanceToNow} from 'date-fns';
+import { Text, StyleSheet } from 'react-native';
+import { parseISO, formatDistanceToNow } from 'date-fns';
 
-const TimeAgo = ({timestamp}) => {
+const TimeAgo = ({ timestamp }) => {
   let timeAgo = '';
   if (timestamp) {
     const date = parseISO(timestamp);
@@ -10,13 +10,10 @@ const TimeAgo = ({timestamp}) => {
     timeAgo = `${timePeriod} ago`;
   }
 
-  return (
-    <Text style={styles.timeAgo} title={timestamp}>
-      <Text>&nbsp;</Text>
-      <Text style={styles.italic}>{timeAgo}</Text>
-    </Text>
-  );
+  return <Text>{timeAgo}</Text>;
 };
+
+
 
 const styles = StyleSheet.create({
   timeAgo: {

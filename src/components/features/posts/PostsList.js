@@ -1,35 +1,44 @@
-import {useSelector} from 'react-redux';
-import React from 'react';
+import React, {useEffect} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
 import {View, Text, StyleSheet, ScrollView} from 'react-native';
-import {selectAllPosts} from './postsSlice';
-import PostAuthor from './PostAuthor';
-import TimeAgo from './TimeAgo';
-import ReactionButtons from './ReactionButtons';
+import {
+  selectAllPosts,
+  getPostsStatus,
+  getPostsError,
+  fetchPosts,
+} from './postsSlice';
+import PostsExcerpts from './PostsExcerpts';
 
 const PostsList = () => {
+  const dispatch = useDispatch();
   const posts = useSelector(selectAllPosts);
-  const orderedPosts = posts.slice().sort((a, b) => b.date.localeCompare(a.date))
+  const postStatus = useSelector(getPostsStatus);
+  const error = useSelector(getPostsError);
 
-  const renderedPosts = orderedPosts.map(post => (
-    <View key={post.id} style={styles.postContainer}>
-      <Text style={styles.postTitle}>{post.title}</Text>
-      <Text style={styles.postContent}>
-        {post.content.length > 100
-          ? `${post.content.substring(0, 100)}...`
-          : post.content}
-      </Text>
-      <View style={styles.postFooter}>
-        <PostAuthor userId={post.userId} />
-        <TimeAgo timestamp={post.date} />
-      </View>
-      <ReactionButtons post={post} />
-    </View>
-  ));
+  useEffect(() => {
+    if (postStatus === 'idle') {
+      dispatch(fetchPosts());
+    }
+  }, [postStatus, dispatch]);
+
+  let content;
+  if (postStatus === 'loading') {
+    content = <Text>Loading...</Text>;
+  } else if (postStatus === 'succeeded') {
+    const orderedPosts = posts
+      .slice()
+      .sort((a, b) => b.date.localeCompare(a.date));
+    content = orderedPosts.map(post => (
+      <PostsExcerpts key={post.id} post={post} />
+    ));
+  } else if (postStatus === 'failed') {
+    content = <Text>{error}</Text>;
+  }
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>Posts</Text>
-      {renderedPosts}
+      {content}
     </ScrollView>
   );
 };
@@ -44,28 +53,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 16,
-  },
-  postContainer: {
-    marginBottom: 16,
-    padding: 20,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  postTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  postContent: {
-    fontSize: 14, 
-    marginBottom: 8,
-  },
-  postFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
 });
 
