@@ -13,8 +13,8 @@ import DrawerScreen from './src/components/Drawer';
 import {name as appName} from './app.json';
 
 // AppRegistry.registerComponent(appName, () => App);
-AppRegistry.registerComponent(appName, () => App1);
-// AppRegistry.registerComponent(appName, () => HomeScreen);
+// AppRegistry.registerComponent(appName, () => App1);
+AppRegistry.registerComponent(appName, () => HomeScreen);
 // AppRegistry.registerComponent(appName, () => DrawerScreen);
 // AppRegistry.registerComponent(appName, () => LoginScreen);
 // AppRegistry.registerComponent(appName, () => ModalScreen);

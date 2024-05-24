@@ -1,52 +1,58 @@
+import React, {useState} from 'react';
 import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ImageBackground,
   Image,
   StatusBar,
-  RefreshControl,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
-// import Icon from 'react-native-vector-icons/FontAwesome';
-// import Icon1 from 'react-native-vector-icons/Entypo';
 import BackgroundImg from '../../assets/background.png';
-// import Box from '../src/Box';
 import ScrollList from '../../src/components/ScrollList';
 import ScrollList1 from '../../src/components/ScrollList1';
-import {green} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
-import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItemList,
-} from '@react-navigation/drawer';
-// import {createDrawerNavigator} from '@react-navigation/drawer';
 import ScreenA from '../../src/components/ScreenA';
 import ScreenB from '../../src/components/ScreenB';
-// import Box1 from '../../src/components/Box1';
-const Stack = createStackNavigator();
-// const Drawer = createDrawerNavigator();
+import CustomDrawerContent from '../MainScreen';
 
-const HomeScreen = () => {
+const Stack = createStackNavigator();
+
+const HomeScreen = ({navigation}) => {
+  const [drawerVisible, setDrawerVisible] = useState(false);
+
+  const handleDrawerOpen = () => {
+    setDrawerVisible(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerVisible(false);
+  };
+
   return (
     <View style={styles.mainbody}>
       <ImageBackground source={BackgroundImg} style={styles.body}>
         <StatusBar backgroundColor="#00004F" />
         <View style={styles.container}>
           <View style={styles.container1}>
-            <Image
-              source={require('../../assets/navigation.png')}
-              style={styles.image1}
-            />
+            <TouchableOpacity onPress={handleDrawerOpen}>
+              <Image
+                source={require('../../assets/navigation.png')}
+                style={styles.image1}
+              />
+            </TouchableOpacity>
+
             <Text style={styles.text}>SMT SCHOOL</Text>
-            <Image
-              source={require('../../assets/notification.png')}
-              style={styles.image1}
-            />
+
+            <TouchableOpacity>
+              <Image
+                source={require('../../assets/notification.png')}
+                style={styles.image1}
+              />
+            </TouchableOpacity>
           </View>
           <View style={styles.container2}>
             <View style={styles.imagecontent}>
@@ -64,7 +70,6 @@ const HomeScreen = () => {
         </View>
       </ImageBackground>
       <ScrollList />
-      {/* <ScrollList1 /> */}
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
           <Stack.Screen
@@ -76,6 +81,12 @@ const HomeScreen = () => {
           <Stack.Screen name="Other" component={ScreenB} />
         </Stack.Navigator>
       </NavigationContainer>
+      {drawerVisible && (
+        <CustomDrawerContent
+          onClose={handleDrawerClose}
+          navigation={navigation}
+        />
+      )}
     </View>
   );
 };
@@ -86,8 +97,6 @@ const styles = StyleSheet.create({
   },
   body: {
     width: '100%',
-    // flexDirection: 'row',
-    // justifyContent: 'space-evenly',
   },
   image1: {
     width: 22,
@@ -149,4 +158,5 @@ const styles = StyleSheet.create({
     gap: 1,
   },
 });
+
 export default HomeScreen;

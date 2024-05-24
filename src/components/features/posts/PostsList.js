@@ -1,15 +1,15 @@
 import React, {useEffect} from 'react';
 import {useSelector, useDispatch} from 'react-redux';
-import {View, Text, StyleSheet, ScrollView} from 'react-native';
+import {View, Text, FlatList, StyleSheet, Button} from 'react-native';
 import {
+  fetchPosts,
   selectAllPosts,
   getPostsStatus,
   getPostsError,
-  fetchPosts,
 } from './postsSlice';
 import PostsExcerpts from './PostsExcerpts';
 
-const PostsList = () => {
+const PostsList = ({navigation}) => {
   const dispatch = useDispatch();
   const posts = useSelector(selectAllPosts);
   const postStatus = useSelector(getPostsStatus);
@@ -22,24 +22,32 @@ const PostsList = () => {
   }, [postStatus, dispatch]);
 
   let content;
+
   if (postStatus === 'loading') {
     content = <Text>Loading...</Text>;
   } else if (postStatus === 'succeeded') {
-    const orderedPosts = posts
-      .slice()
-      .sort((a, b) => b.date.localeCompare(a.date));
-    content = orderedPosts.map(post => (
-      <PostsExcerpts key={post.id} post={post} />
-    ));
+    content =
+      posts.length > 0 ? (
+        <FlatList
+          data={posts}
+          keyExtractor={post => post.id.toString()}
+          renderItem={({item}) => <PostsExcerpts post={item} />}
+        />
+      ) : (
+        <Text>No posts found</Text>
+      );
   } else if (postStatus === 'failed') {
     content = <Text>{error}</Text>;
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Posts</Text>
+    <View style={styles.container}>
       {content}
-    </ScrollView>
+      {/* <Button
+        title="Add Post"
+        onPress={() => navigation.navigate('AddPostForm')}
+      /> */}
+    </View>
   );
 };
 
@@ -48,11 +56,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
   },
 });
 
