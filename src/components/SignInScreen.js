@@ -112,7 +112,8 @@ const styles = StyleSheet.create({
     top: 100,
   },
   subText: {
-    fontSize: 20,
+    fontSize: 17,
+    fontWeight: 'bold',
     color: '#003366',
     top: 110,
   },
