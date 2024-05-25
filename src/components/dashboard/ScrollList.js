@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {View, FlatList, StyleSheet, Text} from 'react-native';
-import Box from '../../src/components/Box';
+import Box from './Box';
 
 const data = [
   {id: '1', title: '9:20Am to 10:00Am', title1: 'English-th'},

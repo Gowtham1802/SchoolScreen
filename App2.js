@@ -1,7 +1,7 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
-import MainNavigator from './MainNavigator'; // Replace with your main navigator
+// import MainNavigator from './MainNavigator'; // Replace with your main navigator
 
 const App2 = () => {
   return (

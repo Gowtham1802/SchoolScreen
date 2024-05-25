@@ -8,7 +8,8 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import Box1 from '../../src/components/Box1';
+import * as Animatable from 'react-native-animatable';
+import Box1 from './Box1';
 
 const ScrollList1 = ({navigation}) => {
   const [refreshing, setRefreshing] = React.useState(false);
@@ -17,94 +18,112 @@ const ScrollList1 = ({navigation}) => {
     {
       id: '1',
       title: 'Message',
-      imageSource: require('../../assets/Box-Images/notification-bell.png'),
+      imageSource: require('../../../assets/Box-Images/notification-bell.png'),
     },
     {
       id: '2',
       title: 'Attendance',
-      imageSource: require('../../assets/Box-Images/attendance.png'),
+      imageSource: require('../../../assets/Box-Images/attendance.png'),
     },
     {
       id: '3',
       title: 'Portfolio',
-      imageSource: require('../../assets/Box-Images/portfolio.png'),
+      imageSource: require('../../../assets/Box-Images/portfolio.png'),
     },
     {
       id: '4',
       title: 'Homework',
-      imageSource: require('../../assets/Box-Images/homework.png'),
+      imageSource: require('../../../assets/Box-Images/homework.png'),
     },
     {
       id: '5',
       title: 'Fees Payment',
-      imageSource: require('../../assets/Box-Images/fees.png'),
+      imageSource: require('../../../assets/Box-Images/fees.png'),
     },
     {
       id: '6',
       title: 'Notes',
-      imageSource: require('../../assets/Box-Images/notes.png'),
+      imageSource: require('../../../assets/Box-Images/notes.png'),
     },
     {
       id: '7',
       title: 'Diary / Events',
-      imageSource: require('../../assets/Box-Images/diary.png'),
+      imageSource: require('../../../assets/Box-Images/diary.png'),
     },
     {
       id: '8',
       title: 'Time Table',
-      imageSource: require('../../assets/Box-Images/timetable.png'),
+      imageSource: require('../../../assets/Box-Images/timetable.png'),
     },
     {
       id: '9',
       title: 'Exam Marks',
-      imageSource: require('../../assets/Box-Images/exammarks.png'),
+      imageSource: require('../../../assets/Box-Images/exammarks.png'),
     },
     {
       id: '10',
       title: 'Calendar Events',
-      imageSource: require('../../assets/Box-Images/calendar.png'),
+      imageSource: require('../../../assets/Box-Images/calendar.png'),
     },
     {
       id: '11',
       title: 'Meal Menu',
-      imageSource: require('../../assets/Box-Images/mealmenu.png'),
+      imageSource: require('../../../assets/Box-Images/mealmenu.png'),
     },
     {
       id: '12',
       title: 'Documents',
-      imageSource: require('../../assets/Box-Images/documents.png'),
+      imageSource: require('../../../assets/Box-Images/documents.png'),
     },
     {
       id: '13',
       title: 'Chat',
-      imageSource: require('../../assets/Box-Images/live-chat.png'),
+      imageSource: require('../../../assets/Box-Images/live-chat.png'),
     },
     {
       id: '14',
       title: 'Transport',
-      imageSource: require('../../assets/Box-Images/transportation.png'),
+      imageSource: require('../../../assets/Box-Images/transportation.png'),
     },
     {
       id: '15',
       title: 'Health Card',
-      imageSource: require('../../assets/Box-Images/healthcard.png'),
+      imageSource: require('../../../assets/Box-Images/healthcard.png'),
     },
     {
       id: '16',
       title: 'My Learning',
-      imageSource: require('../../assets/Box-Images/learning.png'),
+      imageSource: require('../../../assets/Box-Images/learning.png'),
     },
     {
       id: '17',
       title: 'Syllabus',
-      imageSource: require('../../assets/Box-Images/syllabus.png'),
+      imageSource: require('../../../assets/Box-Images/syllabus.png'),
     },
     {
       id: '18',
       title: 'Photo and Videos',
-      imageSource: require('../../assets/Box-Images/photo&video.png'),
+      imageSource: require('../../../assets/Box-Images/photo&video.png'),
     },
   ];
+
+  const customAnimation = {
+    0: {
+      opacity: 0,
+      scale: 0.5,
+      rotate: '0deg',
+    },
+    0.5: {
+      opacity: 1,
+      scale: 1.2,
+      rotate: '180deg',
+    },
+    1: {
+      opacity: 1,
+      scale: 1,
+      rotate: '360deg',
+    },
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -121,11 +140,16 @@ const ScrollList1 = ({navigation}) => {
         numColumns={3}
         showsVerticalScrollIndicator={false}
         renderItem={({item}) => (
-          <Box1
-            title={item.title}
-            imageSource={item.imageSource}
-            navigation={navigation}
-          />
+          <Animatable.View
+            animation={customAnimation}
+            duration={2000}
+            useNativeDriver>
+            <Box1
+              title={item.title}
+              imageSource={item.imageSource}
+              navigation={navigation}
+            />
+          </Animatable.View>
         )}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -140,7 +164,7 @@ const ScrollList1 = ({navigation}) => {
             </View>
 
             <Image
-              source={require('../../assets/onlineclass.png')}
+              source={require('../../../assets/onlineclass.png')}
               style={styles.footerImage}
             />
           </View>

@@ -47,13 +47,16 @@ const CustomDrawerContent = ({navigation, onClose}) => {
               ]}>
               <View style={styles.header}>
                 <Image
-                  source={{uri: 'https://via.placeholder.com/150'}}
+                  source={require('../assets/Gowtham.jpeg')}
                   style={styles.profilePic}
                 />
-                <Text style={styles.name}>PRAVEEN K</Text>
-                <TouchableOpacity>
-                  <Text style={styles.viewProfile}>View Profile</Text>
-                </TouchableOpacity>
+                <View>
+                  <Text style={styles.name}>PRAVEEN K</Text>
+                  <TouchableOpacity>
+                    <Text style={styles.viewProfile}>View Profile</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity
                   onPress={handleClose}
                   style={styles.closeButton}>
@@ -252,6 +255,16 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                     handleClose();
                   }}
                 />
+                <DrawerItem
+                  label="Logout"
+                  icon={({color, size}) => (
+                    <Icon name="logout" color={color} size={size} />
+                  )}
+                  onPress={() => {
+                    navigation.navigate('Logout');
+                    handleClose();
+                  }}
+                />
               </ScrollView>
             </Animated.View>
           </TouchableWithoutFeedback>
@@ -270,14 +283,16 @@ const styles = StyleSheet.create({
     width: 300,
     backgroundColor: '#fff',
     paddingVertical: 20,
-    borderTopRightRadius: 10,
-    borderBottomRightRadius: 10,
+    // borderTopRightRadius: 10,
+    // borderBottomRightRadius: 10,
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
   },
   header: {
+    flexDirection: 'row',
+    gap: 10,
     padding: 20,
     alignItems: 'center',
     borderBottomWidth: 1,
@@ -287,8 +302,8 @@ const styles = StyleSheet.create({
   profilePic: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+    borderRadius: 10,
+    // marginBottom: 10,
   },
   name: {
     fontSize: 18,
@@ -299,11 +314,11 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: -20,
+    right: 8,
   },
   closeButtonText: {
-    fontSize: 20,
+    fontSize: 25,
     color: '#007BFF',
   },
 });

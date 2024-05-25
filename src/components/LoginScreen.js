@@ -10,7 +10,7 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import ScreenA from './ScreenA';
+import ScreenA from './dashboard/ScreenA';
 // import backgroundImage from '../../assets/pexels-irina.jpg';
 import backgroundImage from '../../assets/pexels-irina-iriser.jpg';
 // import backgroundImage from '../../assets/pexels-irina-iriser-1.jpg';

@@ -1,6 +1,6 @@
 // Drawer Navigation Section 
 
-import ScrollList from "./ScrollList";
+import ScrollList from "./dashboard/ScrollList";
 
 
 // import React from 'react';
@@ -7159,7 +7159,7 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import Box1 from '../../src/components/Box1';
+import Box1 from './dashboard/Box1';
 
 const ScrollList1 = ({navigation}) => {
   const [refreshing, setRefreshing] = React.useState(false);

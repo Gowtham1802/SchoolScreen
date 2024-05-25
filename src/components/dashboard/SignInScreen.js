@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const SignInScreen = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#003366" barStyle="light-content" />
@@ -19,13 +21,13 @@ const SignInScreen = () => {
         <View style={styles.background}>
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/SignIn/signin2.jpeg')}
+              source={require('../../../assets/SignIn/signin2.jpeg')}
               style={styles.logo}
             />
           </View>
           <View style={styles.logoContainer1}>
             <Image
-              source={require('../../assets/SignIn/signin1.jpeg')}
+              source={require('../../../assets/SignIn/signin1.jpeg')}
               style={styles.logo1}
             />
           </View>
@@ -58,9 +60,17 @@ const SignInScreen = () => {
                 style={styles.input}
                 placeholder="Password"
                 placeholderTextColor="#003366"
-                secureTextEntry
+                secureTextEntry={!showPassword}
               />
-              <Icon name="eye" size={20} color="#003366" />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Text>
+                  <Icon
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color="#1E90FF"
+                  />
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -145,12 +155,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 140,
     marginBottom: 10,
-    // iOS shadow
-    // shadowColor: '#000',
-    // shadowOffset: {width: 0, height: 2},
-    // shadowOpacity: 0.25,
-    // shadowRadius: 3.84,
-    // Android shadow
     elevation: 5,
   },
   loginButtonText: {

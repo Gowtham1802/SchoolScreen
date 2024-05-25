@@ -10,14 +10,14 @@ import {
   Modal,
   TouchableWithoutFeedback,
 } from 'react-native';
-import BackgroundImg from '../../assets/background.png';
-import ScrollList from '../../src/components/ScrollList';
-import ScrollList1 from '../../src/components/ScrollList1';
+import BackgroundImg from '../../../assets/background.png';
+import ScrollList from './ScrollList';
+import ScrollList1 from './ScrollList1';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import ScreenA from '../../src/components/ScreenA';
-import ScreenB from '../../src/components/ScreenB';
-import CustomDrawerContent from '../MainScreen';
+import ScreenA from './ScreenA';
+import ScreenB from './ScreenB';
+import CustomDrawerContent from '../../MainScreen';
 
 const Stack = createStackNavigator();
 
@@ -40,7 +40,7 @@ const HomeScreen = ({navigation}) => {
           <View style={styles.container1}>
             <TouchableOpacity onPress={handleDrawerOpen}>
               <Image
-                source={require('../../assets/navigation.png')}
+                source={require('../../../assets/navigation.png')}
                 style={styles.image1}
               />
             </TouchableOpacity>
@@ -49,7 +49,7 @@ const HomeScreen = ({navigation}) => {
 
             <TouchableOpacity>
               <Image
-                source={require('../../assets/notification.png')}
+                source={require('../../../assets/notification.png')}
                 style={styles.image1}
               />
             </TouchableOpacity>
@@ -57,7 +57,7 @@ const HomeScreen = ({navigation}) => {
           <View style={styles.container2}>
             <View style={styles.imagecontent}>
               <Image
-                source={require('../../assets/Gowtham.jpeg')}
+                source={require('../../../assets/Gowtham.jpeg')}
                 style={styles.image}
               />
             </View>
