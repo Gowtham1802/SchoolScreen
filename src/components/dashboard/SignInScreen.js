@@ -13,6 +13,20 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const SignInScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [isPasswordValid, setIsPasswordValid] = useState(false);
+
+  const handlePasswordChange = text => {
+    setPassword(text);
+    validatePassword(text);
+  };
+
+  const validatePassword = password => {
+    // Regular expression to check for password complexity
+    const passwordRegex =
+      /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    setIsPasswordValid(passwordRegex.test(password));
+  };
 
   return (
     <View style={styles.container}>
@@ -61,6 +75,7 @@ const SignInScreen = () => {
                 placeholder="Password"
                 placeholderTextColor="#003366"
                 secureTextEntry={!showPassword}
+                onChangeText={handlePasswordChange}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Text>
@@ -72,6 +87,12 @@ const SignInScreen = () => {
                 </Text>
               </TouchableOpacity>
             </View>
+            {!isPasswordValid && password.length > 0 && (
+              <Text style={styles.passwordError}>
+                Password must contain at least one capital letter, one number,
+                one special character, and be at least 8 characters long.
+              </Text>
+            )}
           </View>
 
           <TouchableOpacity style={styles.loginButton}>
@@ -161,6 +182,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  passwordError: {
+    color: 'red',
+    fontSize: 14,
+    marginTop: 5,
   },
 });
 
