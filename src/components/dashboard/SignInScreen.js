@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,25 +8,114 @@ import {
   StyleSheet,
   StatusBar,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const SignInScreen = () => {
+const SignInScreen = ({navigation}) => {
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState('');
-  const [isPasswordValid, setIsPasswordValid] = useState(false);
+  const [username, setUsername] = useState('');
+  const [instituteCode, setInstituteCode] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handlePasswordChange = text => {
     setPassword(text);
-    validatePassword(text);
   };
 
-  const validatePassword = password => {
-    // Regular expression to check for password complexity
-    const passwordRegex =
-      /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-    setIsPasswordValid(passwordRegex.test(password));
+  const handleLogin = async () => {
+    if (!instituteCode || !username || !password) {
+      Alert.alert('Incomplete fields', 'Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('token', instituteCode);
+    formData.append('uname', username);
+    formData.append('upwd', password);
+    formData.append('newversion', '1');
+
+    try {
+      const response = await fetch(
+        'http://schoolapi.netcampus.in/api/app/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formData,
+        },
+      );
+
+      const responseText = await response.text();
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        Alert.alert(
+          'Error',
+          'Server returned invalid response. Please try again later.',
+        );
+        return;
+      }
+
+      if (result.user && navigation) {
+        try {
+          await AsyncStorage.setItem('userToken', JSON.stringify(result));
+          setInstituteCode('');
+          setUsername('');
+          setPassword('');
+
+          console.log(result);
+
+          navigation.navigate('MainScreen', {
+            user: result.user,
+            tenant: result.tenant,
+            menuarry: result.menuarry,
+          });
+        } catch (error) {
+          console.error('Error storing user data:', error);
+        }
+      } else {
+        Alert.alert(
+          'Login failed',
+          result.error || 'Invalid credentials. Please check and try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      Alert.alert('Error', 'Failed to login. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    const clearAsyncStorageAndRefresh = async () => {
+      try {
+        await AsyncStorage.clear();
+        // Force component re-render by changing state
+        setInstituteCode('');
+        setUsername('');
+        setPassword('');
+      } catch (error) {
+        console.error('Error clearing async storage:', error);
+      }
+    };
+
+    const unsubscribe = navigation.addListener(
+      'focus',
+      clearAsyncStorageAndRefresh,
+    );
+
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -56,6 +145,8 @@ const SignInScreen = () => {
                 style={styles.input}
                 placeholder="Institute Code"
                 placeholderTextColor="#003366"
+                value={instituteCode}
+                onChangeText={setInstituteCode}
               />
             </View>
 
@@ -65,6 +156,8 @@ const SignInScreen = () => {
                 style={styles.input}
                 placeholder="User Name"
                 placeholderTextColor="#003366"
+                value={username}
+                onChangeText={setUsername}
               />
             </View>
 
@@ -75,28 +168,30 @@ const SignInScreen = () => {
                 placeholder="Password"
                 placeholderTextColor="#003366"
                 secureTextEntry={!showPassword}
+                value={password}
                 onChangeText={handlePasswordChange}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <Text>
                   <Icon
-                    name={showPassword ? 'eye-off' : 'eye'}
+                    name={showPassword ? 'eye' : 'eye-off'}
                     size={20}
-                    color="#1E90FF"
+                    color="#003366"
                   />
                 </Text>
               </TouchableOpacity>
             </View>
-            {!isPasswordValid && password.length > 0 && (
-              <Text style={styles.passwordError}>
-                Password must contain at least one capital letter, one number,
-                one special character, and be at least 8 characters long.
-              </Text>
-            )}
           </View>
 
-          <TouchableOpacity style={styles.loginButton}>
-            <Text style={styles.loginButtonText}>LOGIN</Text>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -182,11 +277,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  passwordError: {
-    color: 'red',
-    fontSize: 14,
-    marginTop: 5,
   },
 });
 

@@ -12,7 +12,11 @@ import {
   ScrollView,
 } from 'react-native';
 import {DrawerItem} from '@react-navigation/drawer';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {NavigationContainer} from '@react-navigation/native';
+import {createDrawerNavigator} from '@react-navigation/drawer';
+import HomeScreen from './HomeScreen';
 
 const CustomDrawerContent = ({navigation, onClose}) => {
   const slideAnim = useRef(new Animated.Value(-300)).current; // Initial position of the drawer
@@ -47,11 +51,11 @@ const CustomDrawerContent = ({navigation, onClose}) => {
               ]}>
               <View style={styles.header}>
                 <Image
-                  source={require('../assets/Gowtham.jpeg')}
+                  source={require('../../../assets/Gowtham.jpeg')}
                   style={styles.profilePic}
                 />
                 <View>
-                  <Text style={styles.name}>PRAVEEN K</Text>
+                  <Text style={styles.name}>GOWTHAM T</Text>
                   <TouchableOpacity>
                     <Text style={styles.viewProfile}>View Profile</Text>
                   </TouchableOpacity>
@@ -63,22 +67,32 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                   <Text style={styles.closeButtonText}>X</Text>
                 </TouchableOpacity>
               </View>
-              <ScrollView>
+              <ScrollView showsVerticalScrollIndicator={false}>
                 <DrawerItem
                   label="Dashboard"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="view-dashboard" color={color} size={size} />
+                    <Icon
+                      name="view-dashboard"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
-                    navigation.navigate('Dashboard');
+                    navigation.navigate('Home');
                     handleClose();
                   }}
                 />
                 {/* Add other DrawerItems here */}
                 <DrawerItem
                   label="Message"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="message" color={color} size={size} />
+                    <Icon
+                      name="bell-ring"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -87,8 +101,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Attendance"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="account-check"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -97,8 +116,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Portfolio"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <FontAwesome5
+                      name="address-card"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -107,8 +131,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="HomeWork"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="home-edit"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -117,8 +146,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Fees payment"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="credit-card"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -127,8 +161,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Notes"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="note-multiple"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -137,8 +176,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Diary / Events"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="calendar-text"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -147,8 +191,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Time Table"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="timetable"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -157,8 +206,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Exam Marks"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="clipboard-text"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -167,8 +221,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Calendar Events"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="calendar-month"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -177,8 +236,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Meal Menu"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="food"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -187,8 +251,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Documents"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="text-box-multiple-outline"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -197,8 +266,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Chat"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="wechat"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -207,8 +281,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Transport"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <FontAwesome5
+                      name="bus"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -217,8 +296,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Health Card"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <FontAwesome5
+                      name="hospital-user"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -227,8 +311,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="My Learning"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <FontAwesome5
+                      name="graduation-cap"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -237,8 +326,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Syllabus"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="note-edit"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -247,18 +341,13 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                 />
                 <DrawerItem
                   label="Photos and Videos"
+                  labelStyle={styles.labelStyle}
                   icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
-                  )}
-                  onPress={() => {
-                    navigation.navigate('Logout');
-                    handleClose();
-                  }}
-                />
-                <DrawerItem
-                  label="Logout"
-                  icon={({color, size}) => (
-                    <Icon name="logout" color={color} size={size} />
+                    <Icon
+                      name="file-video"
+                      color={styles.iconStyle.color}
+                      size={styles.iconStyle.size}
+                    />
                   )}
                   onPress={() => {
                     navigation.navigate('Logout');
@@ -266,6 +355,12 @@ const CustomDrawerContent = ({navigation, onClose}) => {
                   }}
                 />
               </ScrollView>
+              <TouchableOpacity style={styles.button}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.buttonText}>LOGOUT</Text>
+                  <Icon name="logout" size={24} color="#fff" />
+                </View>
+              </TouchableOpacity>
             </Animated.View>
           </TouchableWithoutFeedback>
         </View>
@@ -310,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   viewProfile: {
-    color: '#007BFF',
+    color: '#344968',
   },
   closeButton: {
     position: 'absolute',
@@ -319,7 +414,38 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 25,
-    color: '#007BFF',
+    color: '#344968',
+  },
+  labelStyle: {
+    color: '#344968',
+    fontSize: 16,
+  },
+  iconStyle: {
+    color: '#344968',
+    size: 24,
+  },
+  button: {
+    backgroundColor: '#344968', // Button background color (you can change this)
+    height: 30, // Button height
+    width: '38%', // Button width
+    borderRadius: 8, // Rounded corners
+    justifyContent: 'center', // Center the content vertically
+    alignItems: 'center', // Center the content horizontally
+    marginVertical: 10,
+    // Android shadow
+    elevation: 5,
+    marginLeft: 20,
+  },
+  iconContainer: {
+    flexDirection: 'row', // Arrange icon and text horizontally
+    alignItems: 'center', // Center vertically within the row
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff', // Text color
+    fontSize: 13, // Text size
+    fontWeight: 'bold', // Text weight
+    marginLeft: 10, // Space between icon and text
   },
 });
 

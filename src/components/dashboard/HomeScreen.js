@@ -17,7 +17,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import ScreenA from './ScreenA';
 import ScreenB from './ScreenB';
-import CustomDrawerContent from '../../MainScreen';
+import CustomDrawerContent from './CustomDrawerContent';
 
 const Stack = createStackNavigator();
 
@@ -77,6 +77,7 @@ const HomeScreen = ({navigation}) => {
             component={ScrollList1}
             options={{headerShown: false}}
           />
+          <Stack.Screen name="Drawer" component={CustomDrawerContent} />
           <Stack.Screen name="About" component={ScreenA} />
           <Stack.Screen name="Other" component={ScreenB} />
         </Stack.Navigator>

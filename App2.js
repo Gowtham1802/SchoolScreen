@@ -1,15 +1,22 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-// import MainNavigator from './MainNavigator'; // Replace with your main navigator
+import {createStackNavigator} from '@react-navigation/stack';
+import HomeScreen from './src/components/dashboard/HomeScreen'; // Importing HomeScreen component
+
+const Stack = createStackNavigator();
 
 const App2 = () => {
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <MainNavigator />
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home">
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{headerShown: false}} // Hiding header for the Home screen
+        />
+        {/* Add other screens here */}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
