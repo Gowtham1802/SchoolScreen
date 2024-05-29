@@ -10643,3 +10643,3111 @@ const styles = StyleSheet.create({
 });
 
 export default ClassPeriod;
+
+
+
+
+
+// Dashboardpage Api method here 
+
+
+
+import React, {useState, useEffect} from 'react';
+import {View, Text, StyleSheet, Alert} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+
+const DashboardItem = () => {
+  const [dashboardItems, setDashboardItems] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboardItems = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userToken');
+        const {User_id} = JSON.parse(userId);
+
+        const response = await axios.post(
+          'http://schoolapi.netcampus.in/api/app/getAppmenuDetails',
+          {
+            tid: 1, // Assuming this is the tenant ID
+            User_id: User_id, // Use the User_id obtained from AsyncStorage
+          },
+        );
+
+        const {data} = response;
+
+        // Check if the response data is an array
+        if (Array.isArray(data)) {
+          setDashboardItems(data);
+        } else {
+          console.error('Invalid response data:', data);
+          Alert.alert('Error', 'Invalid response data received from server.');
+        }
+      } catch (error) {
+        console.error('API Error:', error.response); // Log the response details for debugging
+        Alert.alert(
+          'Error',
+          'Failed to fetch dashboard items. Please try again later.',
+        );
+      }
+    };
+
+    fetchDashboardItems();
+
+    // Cleanup function
+    return () => {
+      // Perform any cleanup if needed
+      // For example, unsubscribe from listeners or clear timeouts/intervals
+    };
+  }, []); // Empty dependency array ensures the effect runs only once on component mount
+
+  return (
+    <View style={styles.container}>
+      {dashboardItems.map((item, index) => (
+        <View style={styles.itemContainer} key={index}>
+          <Text style={styles.label}>{item.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    width: 103,
+    height: 89,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#00004F',
+  },
+  label: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+});
+
+export default DashboardItem;
+
+
+
+
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Animated,
+  RefreshControl,
+  Alert,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import DashboardItem from './DashboardItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+import axios from 'axios';
+
+const dashboardItems = [
+  // Your dashboard items data here
+  {
+    label: 'MESSAGE',
+    icon: require('../../../assets/Box-Images/notification-bell.png'),
+  },
+  {
+    label: 'ATTENDANCE',
+    icon: require('../../../assets/Box-Images/attendance.png'),
+  },
+  {
+    label: 'PORTFOLIO',
+    icon: require('../../../assets/Box-Images/portfolio.png'),
+  },
+  {label: 'HOMEWORK', icon: require('../../../assets/Box-Images/homework.png')},
+  {label: 'FEES PAYMENT', icon: require('../../../assets/Box-Images/fees.png')},
+  {label: 'NOTES', icon: require('../../../assets/Box-Images/notes.png')},
+  {
+    label: 'DIARY / EVENTS',
+    icon: require('../../../assets/Box-Images/diary.png'),
+  },
+  {
+    label: 'TIME TABLE',
+    icon: require('../../../assets/Box-Images/timetable.png'),
+  },
+  {
+    label: 'EXAM MARKS',
+    icon: require('../../../assets/Box-Images/exammarks.png'),
+  },
+  {
+    label: 'CALENDAR EVENTS',
+    icon: require('../../../assets/Box-Images/calendar.png'),
+  },
+  {
+    label: 'MEAL MENU',
+    icon: require('../../../assets/Box-Images/mealmenu.png'),
+  },
+  {
+    label: 'DOCUMENTS',
+    icon: require('../../../assets/Box-Images/documents.png'),
+  },
+  {label: 'CHAT', icon: require('../../../assets/Box-Images/live-chat.png')},
+  {
+    label: 'TRANSPORT',
+    icon: require('../../../assets/Box-Images/transportation.png'),
+  },
+  {
+    label: 'HEALTH CARD',
+    icon: require('../../../assets/Box-Images/healthcard.png'),
+  },
+  {
+    label: 'MY LEARNING',
+    icon: require('../../../assets/Box-Images/learning.png'),
+  },
+  {
+    label: 'PHOTO AND VIDEOS',
+    icon: require('../../../assets/Box-Images/syllabus.png'),
+  },
+  {
+    label: 'LEAVE MODULE',
+    icon: require('../../../assets/Box-Images/photo&video.png'),
+  },
+];
+
+const classData = [
+  {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+  {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+  {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+  {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+  {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+  {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+  {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+];
+
+const customAnimation = {
+  0: {
+    opacity: 0,
+    scale: 0.5,
+    rotate: '0deg',
+  },
+  0.5: {
+    opacity: 1,
+    scale: 1.2,
+    rotate: '180deg',
+  },
+  1: {
+    opacity: 1,
+    scale: 1,
+    rotate: '360deg',
+  },
+};
+
+const MainScreen = () => {
+  const [dashboardItems, setDashboardItems] = useState([]);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const modalAnim = useRef(new Animated.Value(-500)).current;
+
+  const toggleModal = () => {
+    if (isModalVisible) {
+      closeModal();
+    } else {
+      openModal();
+    }
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.timing(modalAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(modalAnim, {
+      toValue: -500,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Logout', onPress: confirmLogout, style: 'destructive'},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      // Navigate to the SignInScreen or any other screen as needed
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchDashboardItems = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userToken');
+        const {User_id} = JSON.parse(userId);
+
+        const response = await axios.post(
+          'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails',
+          {
+            tid: 1,
+            User_id: User_id,
+          },
+          {
+            params: {
+              tid: 1,
+              User_id: 995,
+            },
+          },
+        );
+
+        const {data} = response;
+
+        if (data && data.menuarry && Array.isArray(data.menuarry)) {
+          setDashboardItems(data.menuarry);
+        } else {
+          console.error('Invalid response data:', data);
+          Alert.alert('Error', 'Invalid response data received from server.');
+        }
+      } catch (error) {
+        console.error('API Error:', error.message);
+        Alert.alert(
+          'Error',
+          'Failed to fetch dashboard items. Please try again later.',
+        );
+      }
+    };
+
+    fetchDashboardItems();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const userId = await AsyncStorage.getItem('userToken');
+      const {User_id} = JSON.parse(userId);
+
+      const response = await axios.post(
+        'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails',
+        {
+          tid: 1,
+          User_id: User_id,
+        },
+        {
+          params: {
+            tid: 1,
+            User_id: 995,
+          },
+        },
+      );
+
+      const {data} = response;
+
+      if (data && data.menuarry && Array.isArray(data.menuarry)) {
+        setDashboardItems(data.menuarry);
+      } else {
+        console.error('Invalid response data:', data);
+        Alert.alert('Error', 'Invalid response data received from server.');
+      }
+    } catch (error) {
+      console.error('API Error:', error.message);
+      Alert.alert(
+        'Error',
+        'Failed to fetch dashboard items. Please try again later.',
+      );
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+
+  return (
+    <View style={styles.container}>
+      {/* Your header and profile components here */}
+      {/* Replace with your header component */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={toggleModal}>
+          <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+        </TouchableOpacity>
+        <Text style={styles.schoolName}>SMT SCHOOL</Text>
+        <TouchableOpacity>
+          <Icon
+            name="notifications-outline"
+            size={22}
+            color="#fff"
+            style={styles.bellIcon}
+          />
+        </TouchableOpacity>
+      </View>
+      {/* Replace with your profile component */}
+      <View style={styles.profileContainer}>
+        <View style={styles.imageContainer}>
+          <Image
+            style={styles.profileImage}
+            source={require('../../../assets/Gowtham.jpeg')}
+            // resizeMode="contain"
+          />
+        </View>
+        <View>
+          <Text style={styles.welcomeText}>Welcome</Text>
+          <Text style={styles.userName}>Gowtham T</Text>
+          <View style={styles.classContainer}>
+            <Text style={styles.classText}>X - A</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Your dashboard items */}
+      <ScrollView
+        style={styles.dashboardContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+        {dashboardItems.map((item, index) => (
+          <Animatable.View
+            key={index}
+            animation="fadeInUp"
+            duration={1000}
+            delay={100 * index}
+            useNativeDriver>
+            <TouchableOpacity style={styles.dashboardItem}>
+              {/* You can customize the dashboard item UI */}
+              <Text style={styles.dashboardItemText}>
+                {item.navigationname}
+              </Text>
+            </TouchableOpacity>
+          </Animatable.View>
+        ))}
+      </ScrollView>
+
+      {/* Your footer component here */}
+      {/* Replace with your footer component */}
+      <View style={styles.footerContainer}>
+        <Text style={styles.footerTitle}>Start Online Class</Text>
+        <TouchableOpacity style={styles.footerButton}>
+          <Text style={styles.footerButtonText}>Continue</Text>
+        </TouchableOpacity>
+        <Image
+          source={require('../../../assets/onlineclass.png')}
+          style={styles.footerImage}
+        />
+      </View>
+
+      {/* Modal */}
+      <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={toggleModal}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+            <Icon name="close" size={30} color="#000" />
+          </TouchableOpacity>
+          <View style={styles.profileSection}>
+            <Image
+              style={styles.modalProfileImage}
+              source={require('../../../assets/Gowtham.jpeg')}
+            />
+            <Text style={styles.profileName}>Gowtham T</Text>
+            <Text style={styles.viewProfile}>View Profile</Text>
+          </View>
+          {/* Add your dashboard items in the modal */}
+          <ScrollView style={styles.modalItemsContainer}>
+            {dashboardItems.map((item, index) => (
+              <TouchableOpacity key={index} style={styles.modalItem}>
+                <Text>{item.navigationname}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+            <Text style={styles.buttonText}>LOGOUT</Text>
+            <Icon name="log-out-outline" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+const styles = StyleSheet.create({
+  // Your styles here
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 5,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    bottom: 10,
+    marginLeft: 8,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+    marginRight: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 70,
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  box: {
+    width: 155,
+    backgroundColor: '#00004F',
+    margin: 3,
+    // gap: 10,
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+  },
+  title1: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: 'white',
+    fontSize: 11,
+    textTransform: 'uppercase',
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+    // padding: 5,
+  },
+  row: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dashboardbox: {
+    padding: 10,
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  onlineClassImage: {
+    width: 70,
+    top: 10,
+    height: 70,
+    right: 30,
+    position: 'absolute',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+    position: 'absolute',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    top: -10,
+  },
+  viewProfile: {
+    color: '#3498DB',
+    top: 20,
+    left: -95,
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalItemIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  modalItemText: {
+    fontSize: 16,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  logoutText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 10,
+  },
+  button: {
+    backgroundColor: '#344968', // Button background color (you can change this)
+    height: 30, // Button height
+    width: '38%', // Button width
+    borderRadius: 8, // Rounded corners
+    justifyContent: 'center', // Center the content vertically
+    alignItems: 'center', // Center the content horizontally
+    marginVertical: 10,
+    // Android shadow
+    elevation: 5,
+    // marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row', // Arrange icon and text horizontally
+    alignItems: 'center', // Center vertically within the row
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff', // Text color
+    fontSize: 13, // Text size
+    fontWeight: 'bold', // Text weight
+    marginLeft: 10, // Space between icon and text
+  },
+});
+
+export default MainScreen;
+
+
+
+
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Animated,
+  RefreshControl,
+  Alert,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import DashboardItem from './DashboardItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+import axios from 'axios';
+
+const staticDashboardItems = [
+  {
+    label: 'MESSAGE',
+    icon: require('../../../assets/Box-Images/notification-bell.png'),
+  },
+  {
+    label: 'ATTENDANCE',
+    icon: require('../../../assets/Box-Images/attendance.png'),
+  },
+  {
+    label: 'PORTFOLIO',
+    icon: require('../../../assets/Box-Images/portfolio.png'),
+  },
+  {label: 'HOMEWORK', icon: require('../../../assets/Box-Images/homework.png')},
+  {label: 'FEES PAYMENT', icon: require('../../../assets/Box-Images/fees.png')},
+  {label: 'NOTES', icon: require('../../../assets/Box-Images/notes.png')},
+  {
+    label: 'DIARY / EVENTS',
+    icon: require('../../../assets/Box-Images/diary.png'),
+  },
+  {
+    label: 'TIME TABLE',
+    icon: require('../../../assets/Box-Images/timetable.png'),
+  },
+  {
+    label: 'EXAM MARKS',
+    icon: require('../../../assets/Box-Images/exammarks.png'),
+  },
+  {
+    label: 'CALENDAR EVENTS',
+    icon: require('../../../assets/Box-Images/calendar.png'),
+  },
+  {
+    label: 'MEAL MENU',
+    icon: require('../../../assets/Box-Images/mealmenu.png'),
+  },
+  {
+    label: 'DOCUMENTS',
+    icon: require('../../../assets/Box-Images/documents.png'),
+  },
+  {label: 'CHAT', icon: require('../../../assets/Box-Images/live-chat.png')},
+  {
+    label: 'TRANSPORT',
+    icon: require('../../../assets/Box-Images/transportation.png'),
+  },
+  {
+    label: 'HEALTH CARD',
+    icon: require('../../../assets/Box-Images/healthcard.png'),
+  },
+  {
+    label: 'MY LEARNING',
+    icon: require('../../../assets/Box-Images/learning.png'),
+  },
+  {
+    label: 'PHOTO AND VIDEOS',
+    icon: require('../../../assets/Box-Images/syllabus.png'),
+  },
+  {
+    label: 'LEAVE MODULE',
+    icon: require('../../../assets/Box-Images/photo&video.png'),
+  },
+];
+
+const classData = [
+  {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+  {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+  {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+  {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+  {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+  {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+  {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+];
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [dashboardItems, setDashboardItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const modalAnim = useRef(new Animated.Value(-500)).current;
+  const navigation = useNavigation();
+
+  const toggleModal = () => {
+    if (isModalVisible) {
+      closeModal();
+    } else {
+      openModal();
+    }
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.timing(modalAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(modalAnim, {
+      toValue: -500,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Logout', onPress: confirmLogout, style: 'destructive'},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      navigation.navigate('SignInScreen');
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const fetchDashboardItems = async () => {
+    try {
+      const userToken = await AsyncStorage.getItem('userToken');
+      if (!userToken) {
+        console.error('User token not found.');
+        return;
+      }
+      const userData = JSON.parse(userToken);
+      const {User_id} = userData;
+
+      const requestOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tid: 1,
+          User_id: User_id,
+        }),
+      };
+
+      const response = await fetch(
+        'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails',
+        requestOptions,
+      );
+
+      const data = await response.json();
+
+      if (data && data.menuarry && Array.isArray(data.menuarry)) {
+        const processedItems = data.menuarry.map(item => {
+          if (item.modulename === item.label) {
+            return {
+              ...item,
+              displayName: item.label,
+              icon: getIconForModule(item.modulename),
+            };
+          }
+          return item;
+        });
+
+        const mergedDashboardItems = [
+          ...processedItems,
+          ...staticDashboardItems,
+        ];
+        setDashboardItems(mergedDashboardItems);
+      } else {
+        console.error('Invalid response data:', data);
+        Alert.alert('Error', 'Invalid response data received from server.');
+      }
+    } catch (error) {
+      console.error('API Error:', error.message);
+      Alert.alert(
+        'Error',
+        'Failed to fetch dashboard items. Please try again later.',
+      );
+    }
+  };
+
+  const getIconForModule = moduleName => {
+    switch (moduleName) {
+      case 'MESSAGE':
+        return require('../../../assets/Box-Images/notification-bell.png');
+      case 'ATTENDANCE':
+        return require('../../../assets/Box-Images/attendance.png');
+      case 'PORTFOLIO':
+        return require('../../../assets/Box-Images/portfolio.png');
+      case 'HOMEWORK':
+        return require('../../../assets/Box-Images/homework.png');
+      case 'FEES PAYMENT':
+        return require('../../../assets/Box-Images/fees.png');
+      case 'NOTES':
+        return require('../../../assets/Box-Images/notes.png');
+      case 'DIARY / EVENTS':
+        return require('../../../assets/Box-Images/diary.png');
+      case 'TIME TABLE':
+        return require('../../../assets/Box-Images/timetable.png');
+      case 'EXAM MARKS':
+        return require('../../../assets/Box-Images/exammarks.png');
+      case 'CALENDAR EVENTS':
+        return require('../../../assets/Box-Images/calendar.png');
+      case 'MEAL MENU':
+        return require('../../../assets/Box-Images/mealmenu.png');
+      case 'DOCUMENTS':
+        return require('../../../assets/Box-Images/documents.png');
+      case 'CHAT':
+        return require('../../../assets/Box-Images/live-chat.png');
+      case 'TRANSPORT':
+        return require('../../../assets/Box-Images/transportation.png');
+      case 'HEALTH CARD':
+        return require('../../../assets/Box-Images/healthcard.png');
+      case 'MY LEARNING':
+        return require('../../../assets/Box-Images/learning.png');
+      case 'PHOTO AND VIDEOS':
+        return require('../../../assets/Box-Images/syllabus.png');
+      case 'LEAVE MODULE':
+        return require('../../../assets/Box-Images/photo&video.png');
+      default:
+        return require('../../../assets/Box-Images/photo&video.png');
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardItems();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardItems();
+    setRefreshing(false);
+  };
+
+  const renderItem = ({item}) => (
+    <View style={styles.itemContainer}>
+      <Image source={item.icon} style={styles.itemImage} />
+      <Text style={styles.itemText}>{item.displayName}</Text>
+    </View>
+  );
+
+  const renderItem2 = ({item}) => (
+    <View style={styles.classContainer}>
+      <View style={styles.classSubContainer}>
+        <Text style={styles.title1}>{item.title1}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+      </View>
+      <View style={styles.horizontalLine} />
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#2477B2" />
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Good Morning, John!</Text>
+        <TouchableOpacity onPress={toggleModal}>
+          <Icon name="menu" size={30} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }>
+        <FlatList
+          data={dashboardItems}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollViewContainer}
+        />
+        <View style={styles.classListContainer}>
+          <FlatList
+            data={classData}
+            renderItem={renderItem2}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      </ScrollView>
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={closeModal}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.overlay} onPress={closeModal} />
+          <Animatable.View
+            animation="slideInUp"
+            style={[
+              styles.modalContent,
+              {transform: [{translateY: modalAnim}]},
+            ]}>
+            <TouchableOpacity onPress={handleLogout} style={styles.modalItem}>
+              <Icon name="log-out-outline" size={24} color="#333" />
+              <Text style={styles.modalItemText}>Logout</Text>
+            </TouchableOpacity>
+            {/* Add more modal items as needed */}
+          </Animatable.View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    backgroundColor: '#2477B2',
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  scrollViewContainer: {
+    paddingVertical: 16,
+  },
+  itemContainer: {
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+  itemImage: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
+  },
+  itemText: {
+    color: '#333',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  classListContainer: {
+    padding: 16,
+  },
+  classContainer: {
+    marginBottom: 12,
+  },
+  classSubContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  title1: {
+    fontSize: 16,
+    color: '#333',
+  },
+  title: {
+    fontSize: 16,
+    color: '#333',
+  },
+  horizontalLine: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    marginVertical: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  modalItemText: {
+    marginLeft: 16,
+    fontSize: 16,
+    color: '#333',
+  },
+});
+
+export default MainScreen;
+
+
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Animated,
+  RefreshControl,
+  Alert,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import DashboardItem from './DashboardItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+import axios from 'axios';
+
+const staticDashboardItems = [
+  // Your dashboard items data here
+  {
+    label: 'MESSAGE',
+    icon: require('../../../assets/Box-Images/notification-bell.png'),
+  },
+  {
+    label: 'ATTENDANCE',
+    icon: require('../../../assets/Box-Images/attendance.png'),
+  },
+  {
+    label: 'PORTFOLIO',
+    icon: require('../../../assets/Box-Images/portfolio.png'),
+  },
+  {label: 'HOMEWORK', icon: require('../../../assets/Box-Images/homework.png')},
+  {label: 'FEES PAYMENT', icon: require('../../../assets/Box-Images/fees.png')},
+  {label: 'NOTES', icon: require('../../../assets/Box-Images/notes.png')},
+  {
+    label: 'DIARY / EVENTS',
+    icon: require('../../../assets/Box-Images/diary.png'),
+  },
+  {
+    label: 'TIME TABLE',
+    icon: require('../../../assets/Box-Images/timetable.png'),
+  },
+  {
+    label: 'EXAM MARKS',
+    icon: require('../../../assets/Box-Images/exammarks.png'),
+  },
+  {
+    label: 'CALENDAR EVENTS',
+    icon: require('../../../assets/Box-Images/calendar.png'),
+  },
+  {
+    label: 'MEAL MENU',
+    icon: require('../../../assets/Box-Images/mealmenu.png'),
+  },
+  {
+    label: 'DOCUMENTS',
+    icon: require('../../../assets/Box-Images/documents.png'),
+  },
+  {label: 'CHAT', icon: require('../../../assets/Box-Images/live-chat.png')},
+  {
+    label: 'TRANSPORT',
+    icon: require('../../../assets/Box-Images/transportation.png'),
+  },
+  {
+    label: 'HEALTH CARD',
+    icon: require('../../../assets/Box-Images/healthcard.png'),
+  },
+  {
+    label: 'MY LEARNING',
+    icon: require('../../../assets/Box-Images/learning.png'),
+  },
+  {
+    label: 'PHOTO AND VIDEOS',
+    icon: require('../../../assets/Box-Images/syllabus.png'),
+  },
+  {
+    label: 'LEAVE MODULE',
+    icon: require('../../../assets/Box-Images/photo&video.png'),
+  },
+];
+
+const classData = [
+  {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+  {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+  {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+  {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+  {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+  {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+  {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+];
+
+const customAnimation = {
+  0: {
+    opacity: 0,
+    scale: 0.5,
+    rotate: '0deg',
+  },
+  0.5: {
+    opacity: 1,
+    scale: 1.2,
+    rotate: '180deg',
+  },
+  1: {
+    opacity: 1,
+    scale: 1,
+    rotate: '360deg',
+  },
+};
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [dashboardItems, setDashboardItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const modalAnim = useRef(new Animated.Value(-500)).current;
+  const navigation = useNavigation();
+
+  const toggleModal = () => {
+    if (isModalVisible) {
+      closeModal();
+    } else {
+      openModal();
+    }
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.timing(modalAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(modalAnim, {
+      toValue: -500,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Logout', onPress: confirmLogout, style: 'destructive'},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      navigation.navigate('SignInScreen');
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        // Prevent default back button behavior
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const fetchDashboardItems = async () => {
+    try {
+      // Get user ID from AsyncStorage
+      const userId = await AsyncStorage.getItem('userToken');
+      if (!userId) {
+        console.error('User token not found.');
+        return;
+      }
+      const {User_id} = JSON.parse(userId);
+
+      // Prepare request data
+      const requestData = {
+        tid: 1,
+        User_id: User_id,
+      };
+
+      // Send POST request to API
+      const response = await axios.post(
+        'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails',
+        requestData,
+      );
+      const data = response.data;
+
+      if (data && data.menuarry && Array.isArray(data.menuarry)) {
+        setDashboardItems(data.menuarry);
+      } else {
+        console.error('Invalid response data:', data);
+        Alert.alert('Error', 'Invalid response data received from server.');
+      }
+    } catch (error) {
+      console.error('API Error:', error.message);
+      Alert.alert(
+        'Error',
+        'Failed to fetch dashboard items. Please try again later.',
+      );
+    }
+  };
+
+
+  useEffect(() => {
+    fetchDashboardItems();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardItems();
+    setRefreshing(false);
+  };
+
+  const renderItem = ({ item }) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={1000}>
+      <View style={styles.item}>
+        <Image source={item.icon} style={styles.icon} />
+        <Text style={styles.label}>{item.label}</Text>
+      </View>
+    </Animatable.View>
+  );
+
+
+  // const onRefresh = () => {
+  //   setRefreshing(true);
+  //   setTimeout(() => {
+  //     setRefreshing(false);
+  //   }, 500);
+  // };
+  return (
+    <View style={{flex: 1}}>
+      <StatusBar backgroundColor={'#00004F'} />
+      <View style={styles.container}>
+        {/* Your header and profile components here */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon
+              name="notifications-outline"
+              size={22}
+              color="#fff"
+              style={styles.bellIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <View style={styles.imageContainer}>
+            <Image
+              style={styles.profileImage}
+              source={require('../../../assets/Gowtham.jpeg')}
+              // resizeMode="contain"
+            />
+          </View>
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>Gowtham T</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>X - A</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        {/* Your class periods components here */}
+        <View style={styles.totalbox}>
+          <View style={styles.textbox1}>
+            <Text style={styles.text1}>Today Class Period</Text>
+            <Text style={styles.text2}>(12 Apr 2024)</Text>
+          </View>
+          <View style={styles.textbox2}>
+            <Text style={styles.text1}>Time Table</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            {classData.map(item => (
+              <ClassPeriod
+                key={item.id}
+                periodName={item.title}
+                time={item.title1}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <FlatList
+            data={[...dashboardItems, ...staticDashboardItems]}
+            renderItem={renderItem}
+            keyExtractor={item => item.label}
+            numColumns={3}
+            contentContainerStyle={styles.list}
+          />
+          {/* Your footer component here */}
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Image
+              source={require('../../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        </ScrollView>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={true}
+        onRequestClose={toggleModal}>
+        {/* Your modal component here */}
+        <TouchableOpacity
+          style={styles.modalBackground}
+          activeOpacity={1}
+          onPress={closeModal}>
+          <Animated.View
+            style={[
+              styles.modalContainer,
+              {transform: [{translateX: modalAnim}]},
+            ]}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity
+                onPress={toggleModal}
+                style={styles.closeButton}>
+                <Icon name="close" size={30} color="#000" />
+              </TouchableOpacity>
+              <View style={styles.profileSection}>
+                <Image
+                  style={styles.modalProfileImage}
+                  source={require('../../../assets/Gowtham.jpeg')}
+                />
+                <Text style={styles.profileName}>Gowtham tK</Text>
+                <Text style={styles.viewProfile}>View Profile</Text>
+              </View>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.modalItemsContainer}>
+                {dashboardItems.map((item, index) => (
+                  <TouchableOpacity key={index} style={styles.modalItem}>
+                    <Image source={item.icon} style={styles.modalItemIcon} />
+                    <Text style={styles.modalItemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              {/* <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}>
+                <Text style={styles.logoutText}>Log Out</Text>
+                <Icon name="log-out-outline" size={20} color="#000" />
+              </TouchableOpacity> */}
+              <TouchableOpacity style={styles.button} onPress={handleLogout}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.buttonText}>LOGOUT</Text>
+                  <Icon name="log-out-outline" size={24} color="#fff" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  // Your styles here
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 5,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    bottom: 10,
+    marginLeft: 8,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+    marginRight: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 70,
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  box: {
+    width: 155,
+    backgroundColor: '#00004F',
+    margin: 3,
+    // gap: 10,
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+  },
+  title1: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: 'white',
+    fontSize: 11,
+    textTransform: 'uppercase',
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+    // padding: 5,
+  },
+  row: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dashboardbox: {
+    padding: 10,
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  onlineClassImage: {
+    width: 70,
+    top: 10,
+    height: 70,
+    right: 30,
+    position: 'absolute',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+    position: 'absolute',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    top: -10,
+  },
+  viewProfile: {
+    color: '#3498DB',
+    top: 20,
+    left: -95,
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalItemIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  modalItemText: {
+    fontSize: 16,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  logoutText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 10,
+  },
+  button: {
+    backgroundColor: '#344968', // Button background color (you can change this)
+    height: 30, // Button height
+    width: '38%', // Button width
+    borderRadius: 8, // Rounded corners
+    justifyContent: 'center', // Center the content vertically
+    alignItems: 'center', // Center the content horizontally
+    marginVertical: 10,
+    // Android shadow
+    elevation: 5,
+    // marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row', // Arrange icon and text horizontally
+    alignItems: 'center', // Center vertically within the row
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff', // Text color
+    fontSize: 13, // Text size
+    fontWeight: 'bold', // Text weight
+    marginLeft: 10, // Space between icon and text
+  },
+});
+
+export default MainScreen;
+
+
+
+
+
+const DashboardScreen = () => {
+  const [dashboardItems, setDashboardItems] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboardItems = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userToken');
+        if (!userId) {
+          console.error('User token not found.');
+          // Handle the case where user token is not found, maybe redirect to login screen
+          return;
+        }
+        const { User_id } = JSON.parse(userId);
+
+        const requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tid: 1,
+            User_id: User_id,
+          }),
+        };
+
+        const response = await fetch(
+          'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails',
+          requestOptions,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data && data.menuarry && Array.isArray(data.menuarry)) {
+          const processedItems = data.menuarry.map(item => ({
+            ...item,
+            displayName: item.modulename,
+            icon: getIconForModule(item.modulename),
+          }));
+
+          setDashboardItems(processedItems);
+        } else {
+          console.error('Invalid response data:', data);
+          Alert.alert('Error', 'Invalid response data received from server.');
+        }
+      } catch (error) {
+        console.error('API Error:', error.message);
+        Alert.alert('Error', 'Failed to fetch dashboard items. Please try again later.');
+      }
+    };
+
+    fetchDashboardItems();
+  }, []);
+
+  const getIconForModule = moduleName => {
+    switch (moduleName) {
+      case 'MESSAGE':
+        return require('../../../assets/Box-Images/notification-bell.png');
+      case 'ATTENDANCE':
+        return require('../../../assets/Box-Images/attendance.png');
+      case 'PORTFOLIO':
+        return require('../../../assets/Box-Images/portfolio.png');
+      case 'HOMEWORK':
+        return require('../../../assets/Box-Images/homework.png');
+      case 'FEES PAYMENT':
+        return require('../../../assets/Box-Images/fees.png');
+      case 'NOTES':
+        return require('../../../assets/Box-Images/notes.png');
+      case 'DIARY / EVENTS':
+        return require('../../../assets/Box-Images/diary.png');
+      case 'TIME TABLE':
+        return require('../../../assets/Box-Images/timetable.png');
+      case 'EXAM MARKS':
+        return require('../../../assets/Box-Images/exammarks.png');
+      case 'CALENDAR EVENTS':
+        return require('../../../assets/Box-Images/calendar.png');
+      case 'MEAL MENU':
+        return require('../../../assets/Box-Images/mealmenu.png');
+      case 'DOCUMENTS':
+        return require('../../../assets/Box-Images/documents.png');
+      case 'CHAT':
+        return require('../../../assets/Box-Images/live-chat.png');
+      case 'TRANSPORT':
+        return require('../../../assets/Box-Images/transportation.png');
+      case 'HEALTH CARD':
+        return require('../../../assets/Box-Images/healthcard.png');
+      case 'MY LEARNING':
+        return require('../../../assets/Box-Images/learning.png');
+      case 'PHOTO AND VIDEOS':
+        return require('../../../assets/Box-Images/syllabus.png');
+      case 'LEAVE MODULE':
+        return require('../../../assets/Box-Images/photo&video.png');
+      default:
+        return require('../../../assets/Box-Images/photo&video.png');
+    }
+  };
+
+  const renderItem = ({ item }) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={1000}>
+      <View style={styles.itemContainer}>
+        <DashboardItem item={item} />
+        {getIconForModule}
+        <Image source={item.icon} style={styles.itemImage} />
+        <Text style={styles.itemText}>{item.displayName}</Text>
+      </View>
+    </Animatable.View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={dashboardItems}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => index.toString()}
+        horizontal={true}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContainer}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollViewContainer: {
+    paddingVertical: 16,
+  },
+  itemContainer: {
+    alignItems: 'center',
+    marginHorizontal: 12,
+  },
+  itemImage: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
+  },
+  itemText: {
+    color: '#333',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+});
+
+export default DashboardScreen;
+
+
+
+
+
+import React, {useState, useEffect, useRef} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Animated,
+  RefreshControl,
+  Alert,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import DashboardItem from './DashboardItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+import axios from 'axios';
+
+const staticDashboardItems = [
+  // Your dashboard items data here
+  {
+    label: 'MESSAGE',
+    icon: require('../../../assets/Box-Images/notification-bell.png'),
+  },
+  {
+    label: 'ATTENDANCE',
+    icon: require('../../../assets/Box-Images/attendance.png'),
+  },
+  {
+    label: 'PORTFOLIO',
+    icon: require('../../../assets/Box-Images/portfolio.png'),
+  },
+  {label: 'HOMEWORK', icon: require('../../../assets/Box-Images/homework.png')},
+  {label: 'FEES PAYMENT', icon: require('../../../assets/Box-Images/fees.png')},
+  {label: 'NOTES', icon: require('../../../assets/Box-Images/notes.png')},
+  {
+    label: 'DIARY / EVENTS',
+    icon: require('../../../assets/Box-Images/diary.png'),
+  },
+  {
+    label: 'TIME TABLE',
+    icon: require('../../../assets/Box-Images/timetable.png'),
+  },
+  {
+    label: 'EXAM MARKS',
+    icon: require('../../../assets/Box-Images/exammarks.png'),
+  },
+  {
+    label: 'CALENDAR EVENTS',
+    icon: require('../../../assets/Box-Images/calendar.png'),
+  },
+  {
+    label: 'MEAL MENU',
+    icon: require('../../../assets/Box-Images/mealmenu.png'),
+  },
+  {
+    label: 'DOCUMENTS',
+    icon: require('../../../assets/Box-Images/documents.png'),
+  },
+  {label: 'CHAT', icon: require('../../../assets/Box-Images/live-chat.png')},
+  {
+    label: 'TRANSPORT',
+    icon: require('../../../assets/Box-Images/transportation.png'),
+  },
+  {
+    label: 'HEALTH CARD',
+    icon: require('../../../assets/Box-Images/healthcard.png'),
+  },
+  {
+    label: 'MY LEARNING',
+    icon: require('../../../assets/Box-Images/learning.png'),
+  },
+  {
+    label: 'PHOTO AND VIDEOS',
+    icon: require('../../../assets/Box-Images/syllabus.png'),
+  },
+  {
+    label: 'LEAVE MODULE',
+    icon: require('../../../assets/Box-Images/photo&video.png'),
+  },
+];
+
+const classData = [
+  {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+  {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+  {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+  {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+  {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+  {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+  {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+];
+
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [dashboardItems, setDashboardItems] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const modalAnim = useRef(new Animated.Value(-500)).current;
+  const navigation = useNavigation();
+
+  const toggleModal = () => {
+    if (isModalVisible) {
+      closeModal();
+    } else {
+      openModal();
+    }
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+    Animated.timing(modalAnim, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeModal = () => {
+    Animated.timing(modalAnim, {
+      toValue: -500,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => setModalVisible(false));
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {text: 'Cancel', style: 'cancel'},
+        {text: 'Logout', onPress: confirmLogout, style: 'destructive'},
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const confirmLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      navigation.navigate('SignInScreen');
+    } catch (error) {
+      console.error('Error clearing user data:', error);
+    }
+  };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        // Prevent default back button behavior
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const fetchDashboardItems = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userToken');
+      if (!userId) {
+        console.error('User token not found.');
+        // Handle the case where user token is not found, maybe redirect to login screen
+        return;
+      }
+      const {User_id} = JSON.parse(userId);
+
+      const requestOptions = {
+        method: 'POST',
+        body: JSON.stringify({
+          tid: 1,
+          User_id: User_id,
+        }),
+      };
+
+      const response = await fetch(
+        'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995',
+        requestOptions,
+      );
+      const data = await response.json();
+
+      console.log('Data here : ',data);
+
+      if (data && data.menuarry && Array.isArray(data.menuarry)) {
+        // Merge fetched menu items with static items
+        const mergedDashboardItems = [
+          ...data.menuarry
+        ];
+        setDashboardItems(mergedDashboardItems);
+      } else {
+        console.error('Invalid response data:', data);
+        Alert.alert('Error', 'Invalid response data received from server.');
+      }
+    } catch (error) {
+      console.error('API Error:', error.message);
+      Alert.alert(
+        'Error',
+        'Failed to fetch dashboard items. Please try again later.',
+      );
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardItems();
+  }, []);
+
+
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchDashboardItems();
+    setRefreshing(false);
+  };
+
+  const renderItem = ({item}) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={1000}>
+      <View style={styles.item}>
+        <DashboardItem item={item} />
+      </View>
+    </Animatable.View>
+  );
+
+  return (
+    <View style={{flex: 1}}>
+      <StatusBar backgroundColor={'#00004F'} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon
+              name="notifications-outline"
+              size={22}
+              color="#fff"
+              style={styles.bellIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <View style={styles.imageContainer}>
+            <Image
+              style={styles.profileImage}
+              source={require('../../../assets/Gowtham.jpeg')}
+            />
+          </View>
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>Gowtham T</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>X - A</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        <View style={styles.totalbox}>
+          <View style={styles.textbox1}>
+            <Text style={styles.text1}>Today Class Period</Text>
+            <Text style={styles.text2}>(12 Apr 2024)</Text>
+          </View>
+          <View style={styles.textbox2}>
+            <Text style={styles.text1}>Time Table</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            {classData.map(item => (
+              <ClassPeriod
+                key={item.id}
+                periodName={item.title}
+                time={item.title1}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <FlatList
+            data={dashboardItems}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={3}
+            contentContainerStyle={styles.list}
+          />
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={require('../../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        </ScrollView>
+      </View>
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={true}
+        onRequestClose={toggleModal}>
+        <TouchableOpacity
+          style={styles.modalBackground}
+          activeOpacity={1}
+          onPress={closeModal}>
+          <Animated.View
+            style={[
+              styles.modalContainer,
+              {transform: [{translateX: modalAnim}]},
+            ]}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity
+                onPress={toggleModal}
+                style={styles.closeButton}>
+                <Icon name="close" size={30} color="#000" />
+              </TouchableOpacity>
+              <View style={styles.profileSection}>
+                <Image
+                  style={styles.modalProfileImage}
+                  source={require('../../../assets/Gowtham.jpeg')}
+                />
+                <Text style={styles.profileName}>Gowtham tK</Text>
+                <Text style={styles.viewProfile}>View Profile</Text>
+              </View>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.modalItemsContainer}>
+                {dashboardItems.map((item, index) => (
+                  <TouchableOpacity key={index} style={styles.modalItem}>
+                    <Image source={item.icon} style={styles.icon} />
+                    <Text style={styles.modalItemText}>{item.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity style={styles.button} onPress={handleLogout}>
+                <View style={styles.iconContainer}>
+                  <Text style={styles.buttonText}>LOGOUT</Text>
+                  <Icon name="log-out-outline" size={24} color="#fff" />
+                </View>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  // Your styles here
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 5,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    bottom: 10,
+    marginLeft: 8,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+    marginRight: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 15,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 2,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 70,
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  box: {
+    width: 155,
+    backgroundColor: '#00004F',
+    margin: 3,
+    // gap: 10,
+    padding: 15,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+  },
+  title1: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: 'white',
+    fontSize: 11,
+    textTransform: 'uppercase',
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+    // padding: 5,
+  },
+  row: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  dashboardbox: {
+    padding: 10,
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  onlineClassImage: {
+    width: 70,
+    top: 10,
+    height: 70,
+    right: 30,
+    position: 'absolute',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+    position: 'absolute',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    top: -10,
+  },
+  viewProfile: {
+    color: '#00004F',
+    top: 20,
+    left: -95,
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalItemIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  modalItemText: {
+    fontSize: 16,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  logoutText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 10,
+  },
+  button: {
+    backgroundColor: '#344968', // Button background color (you can change this)
+    height: 30, // Button height
+    width: '38%', // Button width
+    borderRadius: 8, // Rounded corners
+    justifyContent: 'center', // Center the content vertically
+    alignItems: 'center', // Center the content horizontally
+    marginVertical: 10,
+    // Android shadow
+    elevation: 5,
+    // marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row', // Arrange icon and text horizontally
+    alignItems: 'center', // Center vertically within the row
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff', // Text color
+    fontSize: 13, // Text size
+    fontWeight: 'bold', // Text weight
+    marginLeft: 10, // Space between icon and text
+  },
+});
+
+export default MainScreen;
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, ScrollView, Modal, StatusBar, BackHandler, Alert } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
+import ClassPeriod from './time_table';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Api = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [menuarry, setMenuarry] = useState([]);
+  const navigation = useNavigation();
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel'
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear();
+              navigation.navigate('SignIn');
+            } catch (error) {
+              console.error('Error clearing async storage:', error);
+            }
+          }
+        }
+      ],
+      { cancelable: false }
+    );
+  };
+
+  useEffect(() => {
+    const fetchMenuarry = async () => {
+      try {
+        var response = await fetch(http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995, {
+          method: "POST",
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          setMenuarry(data.menuarry);
+        } else {
+          console.error('Error fetching data:');
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    const fetchProfile = async () => {
+      try {
+        const userToken = await AsyncStorage.getItem('userToken');
+        const parsedToken = JSON.parse(userToken);
+        const token = parsedToken.token;
+
+        const response = await fetch(http://Schoolapi.netcampus.in/api/app/profile?token=1^995^3);
+        const text = await response.text();
+
+        if (response.ok) {
+          const result = JSON.parse(text);
+          setProfile(result);
+        } else {
+          console.error('Error fetching profile:', text);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    fetchMenuarry();
+    fetchProfile();
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
+
+  const renderItem = ({ item }) => (
+    <TouchableOpacity style={styles.itemContainer}>
+      <Image source={getIcon(item.modulename)} style={styles.icon} />
+      <Text style={styles.label}>{item.modulename}</Text>
+    </TouchableOpacity>
+  );
+
+  const getIcon = (modulename) => {
+    switch (modulename) {
+      case 'Message':
+        return require('../assets/Message.png');
+      case 'Attendance':
+        return require('../assets/Attendance.png');
+      case 'Portfolio':
+        return require('../assets/Portfolio.png');
+      case 'Homework':
+        return require('../assets/Homework.png');
+      case 'Fees Payment':
+        return require('../assets/Fees.png');
+      case 'Notes':
+        return require('../assets/Notes.png');
+      case 'Diary / Events':
+        return require('../assets/Diary   Events.png');
+      case 'Time Table':
+        return require('../assets/TimeTable.png');
+      case 'Exam Marks':
+        return require('../assets/ExamMarks.png');
+      case 'Calendar Events':
+        return require('../assets/CalendarEvents.png');
+      case 'Meal Menu':
+        return require('../assets/MealMenu.png');
+      case 'Documents':
+        return require('../assets/documents.png');
+      case 'Chat':
+        return require('../assets/chat.png');
+      case 'Transport':
+        return require('../assets/transport.png');
+      case 'Health Card':
+        return require('../assets/HealthCard.png');
+      case 'My Learning':
+        return require('../assets/MyLearning.png');
+      case 'Photo And Videos':
+        return require('../assets/Photo.png');
+      case 'Leave Module':
+        return require('../assets/leave.png');
+      default:
+        return require('../assets/attendance.png');
+    }
+  };
+
+  if (!profile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const classDetail = profile.classDetail;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <StatusBar backgroundColor={'#092085'} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon name="notifications-outline" size={22} color="#fff" style={styles.bellIcon} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{ uri: profile.user.photo }}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>{profile.user.firstname}</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>
+                {classDetail && classDetail.semester && classDetail.division
+                  ? ${classDetail.semester} - ${classDetail.division}
+                  : 'N/A'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        <Text style={styles.sectionTitle}>Today Class Period</Text>
+        <Text style={styles.subsectionTitle}>(24 May 2024)</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            <ClassPeriod periodName="ENGLISH-TH" time="9:20 AM to 10:00 AM" />
+            <ClassPeriod periodName="LANGUAGE-TH" time="10:00 AM to 10:40 AM" />
+            <ClassPeriod periodName="HINDI-TH" time="10:50 AM to 11:30 AM" />
+            <ClassPeriod periodName="HINDI-TH" time="10:50 AM to 11:30 AM" />
+            <ClassPeriod periodName="HINDI-TH" time="10:50 AM to 11:30 AM" />
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <FlatList
+          data={menuarry}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => index.toString()}
+          numColumns={3}
+          columnWrapperStyle={styles.row}
+          // scrollEnabled={false}
+        />
+        <View style={styles.startOnlineClassContainer}>
+          <Text style={styles.startOnlineClassText}>Start Online Class</Text>
+          <Image source={require('../assets/online-class.png')} style={styles.onlineClassImage} />
+          <TouchableOpacity style={styles.continueButton}>
+            <Text style={styles.continueButtonText}>Continue</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={false}
+        onRequestClose={toggleModal}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalContainer}
+          onPress={toggleModal}
+        >
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+              <Icon name="close" size={30} color="#000" />
+            </TouchableOpacity>
+            <View style={styles.profileSection}>
+              <Image style={styles.modalProfileImage} source={{ uri: profile.user.photo }} />
+              <Text style={styles.profileName}>{profile.user.firstname}</Text>
+              <Text style={styles.viewProfile}>View Profile</Text>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalItemsContainer}>
+              {menuarry.map((item, index) => (
+                <View key={index} style={styles.menuItem}>
+                  <Image source={getIcon(item.modulename)} style={styles.menuItemIcon} />
+                  <Text style={styles.menuItemText}>{item.modulename}</Text>
+                </View>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutText}>Logout</Text>
+              <Icon name="log-out-outline" size={24} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    height: 181,
+    backgroundColor: '#092085',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 5,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    left: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+    marginRight: 20,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 80,
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  sectionTitle: {
+    color: '#000',
+    fontSize: 14,
+    left: 20,
+    fontWeight: 'bold',
+  },
+  subsectionTitle: {
+    fontSize: 13,
+    position: 'absolute',
+    left: 150,
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    left: 10,
+    top: -10,
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#c4ccf2',
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  row: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  startOnlineClassContainer: {
+    marginTop: 50,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    bottom: 35,
+    width: '95%',
+    left: 10,
+    borderRadius: 5,
+    height: 90,
+  },
+  startOnlineClassText: {
+    color: '#000',
+    fontSize: 18,
+    marginBottom: 10,
+    left: -70,
+    top: 17,
+    fontWeight: 'bold',
+  },
+  continueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498DB',
+    borderRadius: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 20,
+    left: -88,
+    top: 13,
+  },
+  continueButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginRight: 10,
+  },
+  onlineClassImage: {
+    width: 70,
+    top: 10,
+    height: 70,
+    right: 30,
+    position: 'absolute',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    top: -10,
+  },
+  viewProfile: {
+    color: '#3498DB',
+    top: 20,
+    left: -95,
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  menuItem: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 20,
+    marginHorizontal: 10,
+  },
+  menuItemIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 5,
+  },
+  menuItemText: {
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 'auto',
+  },
+  logoutText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+    marginRight: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    width: 103,
+    height: 89,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#092085',
+    top: 7,
+    left: -5,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginBottom: 10,
+  },
+  label: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+});
+
+export default Api;
