@@ -15,8 +15,8 @@ import ScrollList from './ScrollList';
 import ScrollList1 from './ScrollList1';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import ScreenA from './ScreenA';
-import ScreenB from './ScreenB';
+import ScreenA from '../dashboard/ScreenA';
+import ScreenB from '../dashboard/ScreenB';
 import CustomDrawerContent from './CustomDrawerContent';
 
 const Stack = createStackNavigator();

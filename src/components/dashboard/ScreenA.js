@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-import ScrollList1 from './ScrollList1';
+import ScrollList1 from '../dashboard/ScrollList1';
 
 function ScreenA({navigation}) {
   return (

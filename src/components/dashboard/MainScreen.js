@@ -68,71 +68,86 @@ const MainScreen = () => {
     );
   };
 
+  const fetchAsyncStorageValues = async () => {
+    try {
+      const tid = await AsyncStorage.getItem('tid');
+      const id = await AsyncStorage.getItem('id');
+      const rollId = await AsyncStorage.getItem('roll_id');
+      return {tid, id, rollId};
+    } catch (error) {
+      console.error('Error fetching AsyncStorage values:', error);
+      return {tid: null, id: null, rollId: null};
+    }
+  };
+
+  const fetchMenuarry = async () => {
+    try {
+      const {tid, id} = await fetchAsyncStorageValues();
+
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=${tid}&User_id=${id}`,
+        {
+          method: 'POST',
+        },
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setMenuarry(data.menuarry);
+      } else {
+        console.error('Error fetching data:');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const {tid, id, rollId} = await fetchAsyncStorageValues();
+
+      if (!tid || !id || !rollId) {
+        console.error('tid, id, or roll_id is null');
+        return;
+      }
+
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/profile?token=${tid}^${id}^${rollId}`,
+      );
+
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        setProfile(result);
+      } else {
+        console.error('Error fetching profile:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchtimetable = async () => {
+    try {
+      const {tid, id, rollId} = await fetchAsyncStorageValues();
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/mytimetable?token=${tid}^${id}^${rollId}`,
+      );
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        setTimetable(result.data);
+      } else {
+        console.error('Error fetching timetable:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching timetable:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchMenuarry = async () => {
-      try {
-        var response = await fetch(
-          'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995',
-          {
-            method: 'POST',
-          },
-        );
-        const data = await response.json();
-
-        if (response.ok) {
-          setMenuarry(data.menuarry);
-        } else {
-          console.error('Error fetching data:');
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    const fetchProfile = async () => {
-      try {
-        const userToken = await AsyncStorage.getItem('userToken');
-        const parsedToken = JSON.parse(userToken);
-        const token = parsedToken.token;
-
-        const response = await fetch(
-          'http://Schoolapi.netcampus.in/api/app/profile?token=1^995^3',
-        );
-        const text = await response.text();
-
-        if (response.ok) {
-          const result = JSON.parse(text);
-          setProfile(result);
-        } else {
-          console.error('Error fetching profile:', text);
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      }
-    };
-
-    const fetchtimetable = async () => {
-      try {
-        const userToken = await AsyncStorage.getItem('userToken');
-        const parsedToken = JSON.parse(userToken);
-        const token = parsedToken.token;
-
-        const response = await fetch(
-          'http://Schoolapi.netcampus.in/api/app/mytimetable?token=1^995^3',
-        );
-        const text = await response.text();
-
-        if (response.ok) {
-          const result = JSON.parse(text);
-          setTimetable(result.data);
-        } else {
-          console.error('Error fetching timetable:', text);
-        }
-      } catch (error) {
-        console.error('Error fetching timetable:', error);
-      }
-    };
-
     fetchMenuarry();
     fetchProfile();
     fetchtimetable();
@@ -148,7 +163,7 @@ const MainScreen = () => {
   }, []);
 
   const renderItem = ({item}) => (
-    <Animatable.View animation="fadeInUp" duration={1500} delay={1000}>
+    <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
       <TouchableOpacity style={styles.itemContainer}>
         <Image source={getIcon(item.modulename)} style={styles.icon} />
         <Text style={styles.label}>{item.modulename}</Text>
@@ -265,7 +280,7 @@ const MainScreen = () => {
               <Text style={styles.classText}>
                 {classDetail && classDetail.semester && classDetail.division
                   ? `${classDetail.semester} - ${classDetail.division}`
-                  : 'N/A'}
+                  : ''}
               </Text>
             </View>
           </View>
@@ -339,21 +354,24 @@ const MainScreen = () => {
               <Icon name="close" size={30} color="#000" />
             </TouchableOpacity>
             <View style={styles.profileSection}>
-              <Image
-                style={styles.modalProfileImage}
-                source={{uri: profile.user.photo}}
-              />
-              <Text style={styles.profileName}>{profile.user.firstname}</Text>
-              <TouchableOpacity>
-                <Text style={styles.viewProfile}>View Profile</Text>
-              </TouchableOpacity>
+              <View>
+                <Image
+                  style={styles.modalProfileImage}
+                  source={{uri: profile.user.photo}}
+                />
+              </View>
+              <View>
+                <Text style={styles.profileName}>{profile.user.firstname}</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewProfile}>View Profile</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <Text style={styles.line}></Text>
 
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={styles.modalItemsContainer}>
-              {menuarry.map((item, index) => (
+            <FlatList
+              data={menuarry}
+              renderItem={({item, index}) => (
                 <TouchableOpacity>
                   <View key={index} style={styles.menuItem}>
                     <Image
@@ -363,8 +381,12 @@ const MainScreen = () => {
                     <Text style={styles.menuItemText}>{item.modulename}</Text>
                   </View>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+              keyExtractor={(item, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+              style={styles.modalItemsContainer}
+            />
+
             <TouchableOpacity style={styles.button} onPress={handleLogout}>
               <View style={styles.iconContainer}>
                 <Text style={styles.buttonText}>LOGOUT</Text>
@@ -392,7 +414,7 @@ const styles = StyleSheet.create({
     top: 10,
   },
   menuIcon: {
-    marginLeft: 5,
+    marginLeft: 8,
   },
   schoolName: {
     color: '#fff',
@@ -447,13 +469,13 @@ const styles = StyleSheet.create({
   },
   textbox1: {
     flexDirection: 'row',
-    marginLeft: 10,
+    marginLeft: 18,
   },
   textbox2: {
     marginRight: 10,
   },
   text1: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     color: 'black',
   },
@@ -522,7 +544,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -551,13 +573,13 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
-    top: -18,
+    // top: -18,
     color: '#344968',
   },
   viewProfile: {
     color: 'black',
-    top: 10,
-    right: 144,
+    // top: 10,
+    // right: 85,
     fontSize: 15,
     fontWeight: 'bold',
   },
@@ -627,12 +649,12 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#344968', 
-    height: 30, 
-    width: '38%', 
-    borderRadius: 8, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
+    backgroundColor: '#344968',
+    height: 30,
+    width: '38%',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginVertical: 6,
     bottom: -10,
     // Android shadow
@@ -640,15 +662,15 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   iconContainer: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
   buttonText: {
-    color: '#fff', 
-    fontSize: 13, 
-    fontWeight: 'bold', 
-    marginLeft: 10, 
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 10,
   },
 });
 

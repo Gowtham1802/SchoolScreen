@@ -67,7 +67,13 @@ const SignInScreen = ({navigation}) => {
 
       if (result.user && navigation) {
         try {
-          await AsyncStorage.setItem('userToken', JSON.stringify(result));
+          await AsyncStorage.setItem('tid', result?.tenant?.tid.toString());
+          await AsyncStorage.setItem('id', result?.user?.id.toString());
+          await AsyncStorage.setItem(
+            'roll_id',
+            result?.user?.role_id.toString(),
+          );
+          await AsyncStorage.setItem('userToken', result.user.id.toString());
           setInstituteCode('');
           setUsername('');
           setPassword('');

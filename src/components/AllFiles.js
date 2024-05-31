@@ -1,6 +1,6 @@
 // Drawer Navigation Section 
 
-import ScrollList from "./dashboard/ScrollList";
+import ScrollList from "./otherDashboard/ScrollList";
 
 
 // import React from 'react';
@@ -7159,7 +7159,7 @@ import {
   Image,
   RefreshControl,
 } from 'react-native';
-import Box1 from './dashboard/Box1';
+import Box1 from './otherDashboard/Box1';
 
 const ScrollList1 = ({navigation}) => {
   const [refreshing, setRefreshing] = React.useState(false);
@@ -13309,7 +13309,7 @@ const Api = () => {
   useEffect(() => {
     const fetchMenuarry = async () => {
       try {
-        var response = await fetch(http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995, {
+        var response = await fetch('http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995', {
           method: "POST",
         });
         const data = await response.json();
@@ -13330,7 +13330,7 @@ const Api = () => {
         const parsedToken = JSON.parse(userToken);
         const token = parsedToken.token;
 
-        const response = await fetch(http://Schoolapi.netcampus.in/api/app/profile?token=1^995^3);
+        const response = await fetch('http://Schoolapi.netcampus.in/api/app/profile?token=1^995^3');
         const text = await response.text();
 
         if (response.ok) {
@@ -13751,3 +13751,1882 @@ const styles = StyleSheet.create({
 });
 
 export default Api;
+
+
+//Api change functionality here 
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Alert,
+  Animated,
+  RefreshControl,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [timetable, setTimetable] = useState([]);
+  const [menuarry, setMenuarry] = useState([]);
+  const navigation = useNavigation();
+
+  const classData = [
+    {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+    {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+    {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+    {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+    {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+    {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+    {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+  ];
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear();
+              navigation.navigate('SignInScreen');
+            } catch (error) {
+              console.error('Error clearing async storage:', error);
+            }
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const fetchMenuarry = async () => {
+    try {
+      var response = await fetch(
+        'http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=1&User_id=995',
+        {
+          method: 'POST',
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMenuarry(data.menuarry);
+      } else {
+        console.error('Error fetching data:');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  // Example function to store user profiles with dynamic IDs
+  const storeUserProfiles = async () => {
+    const profiles = [
+      {name: 'Alice', tid: 'tid1', userid: 'userid1', roleid: 'roleid1'},
+      {name: 'Bob', tid: 'tid2', userid: 'userid2', roleid: 'roleid2'},
+      {name: 'Charlie', tid: 'tid3', userid: 'userid3', roleid: 'roleid3'},
+      // Add more profiles as needed
+    ];
+
+    try {
+      await AsyncStorage.setItem('userProfiles', JSON.stringify(profiles));
+    } catch (error) {
+      console.error('Error storing user profiles:', error);
+    }
+  };
+
+  // Call this function once to store the profiles
+  storeUserProfiles();
+
+  const getUserProfileByName = async name => {
+    try {
+      const profiles = await AsyncStorage.getItem('userProfiles');
+      if (profiles !== null) {
+        const parsedProfiles = JSON.parse(profiles);
+        const profile = parsedProfiles.find(profile => profile.name === name);
+        if (profile) {
+          return profile;
+        } else {
+          throw new Error('Profile not found for the given name');
+        }
+      } else {
+        throw new Error('User profiles not found in AsyncStorage');
+      }
+    } catch (error) {
+      console.error('Error retrieving user profile:', error);
+      throw error;
+    }
+  };
+
+  // Function to call the API with the constructed URL
+  const fetchProfile = async name => {
+    try {
+      const userToken = await AsyncStorage.getItem('userToken');
+      const parsedToken = JSON.parse(userToken);
+      const token = parsedToken.token;
+
+      const profile = await getUserProfileByName(name);
+      const {tid, userid, roleid} = profile;
+
+      // Fetch the actual IDs from AsyncStorage based on variable names
+      const tidValue = await AsyncStorage.getItem(tid);
+      const useridValue = await AsyncStorage.getItem(userid);
+      const roleidValue = await AsyncStorage.getItem(roleid);
+
+      if (!tidValue || !useridValue || !roleidValue) {
+        throw new Error('One or more IDs not found in AsyncStorage');
+      }
+
+      // Construct the URL with the fetched values
+      const apiUrl = `http://Schoolapi.netcampus.in/api/app/profile?token=${tidValue}^${useridValue}^${roleidValue}`;
+
+      // Make the API call
+      const response = await fetch(apiUrl);
+
+      // Fetch response text
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        // Assuming you have a setProfile method to update state
+        console.log('Profile fetched:', result);
+        // Update your state or handle the result as needed
+        // setProfile(result); // Uncomment if using a state setter
+      } else {
+        console.error('Error fetching profile:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+
+  const fetchtimetable = async () => {
+    try {
+      const userToken = await AsyncStorage.getItem('userToken');
+      const parsedToken = JSON.parse(userToken);
+      const token = parsedToken.token;
+
+      const response = await fetch(
+        'http://Schoolapi.netcampus.in/api/app/mytimetable?token=1^995^3',
+      );
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        setTimetable(result.data);
+      } else {
+        console.error('Error fetching timetable:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching timetable:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenuarry();
+    fetchProfile('Alice');
+    fetchtimetable();
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const renderItem = ({item}) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
+      <TouchableOpacity style={styles.itemContainer}>
+        <Image source={getIcon(item.modulename)} style={styles.icon} />
+        <Text style={styles.label}>{item.modulename}</Text>
+      </TouchableOpacity>
+    </Animatable.View>
+  );
+
+  const getIcon = modulename => {
+    switch (modulename) {
+      case 'Message':
+        return require('../../../assets/Box-Images/notification-bell.png');
+      case 'Attendance':
+        return require('../../../assets/Box-Images/attendance.png');
+      case 'Portfolio':
+        return require('../../../assets/Box-Images/portfolio.png');
+      case 'Homework':
+        return require('../../../assets/Box-Images/homework.png');
+      case 'Fees Payment':
+        return require('../../../assets/Box-Images/fees.png');
+      case 'Notes':
+        return require('../../../assets/Box-Images/notes.png');
+      case 'Diary / Events':
+        return require('../../../assets/Box-Images/diary.png');
+      case 'Time Table':
+        return require('../../../assets/Box-Images/timetable.png');
+      case 'Exam Marks':
+        return require('../../../assets/Box-Images/exammarks.png');
+      case 'Calendar Events':
+        return require('../../../assets/Box-Images/calendar.png');
+      case 'Meal Menu':
+        return require('../../../assets/Box-Images/mealmenu.png');
+      case 'Documents':
+        return require('../../../assets/Box-Images/documents.png');
+      case 'Chat':
+        return require('../../../assets/Box-Images/live-chat.png');
+      case 'Transport':
+        return require('../../../assets/Box-Images/transportation.png');
+      case 'Health Card':
+        return require('../../../assets/Box-Images/healthcard.png');
+      case 'My Learning':
+        return require('../../../assets/Box-Images/learning.png');
+      case 'Photo And Videos':
+        return require('../../../assets/Box-Images/photo&video.png');
+      case 'Leave Module':
+        return require('../../../assets/Box-Images/syllabus.png');
+      default:
+        return require('../../../assets/Box-Images/photo&video.png');
+    }
+  };
+
+  // Function to get the current date and the day of the week
+  const getCurrentDate = () => {
+    const date = new Date();
+    const dayOfWeek = date.getDay();
+    const dayOfMonth = date.getDate();
+    const month = date.toLocaleString('default', {month: 'long'});
+    const year = date.getFullYear();
+
+    const currentDate = `${dayOfMonth} ${month} ${year}`;
+
+    return {currentDate, dayOfWeek};
+  };
+
+  const {currentDate, dayOfWeek} = getCurrentDate();
+
+  const todayTimetable = timetable.filter(
+    item => item.day_of_week === dayOfWeek,
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await getIcon();
+    setRefreshing(false);
+  };
+
+  if (!profile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const classDetail = profile.classDetail;
+
+  return (
+    <View style={{flex: 1}}>
+      <StatusBar backgroundColor={'#00004F'} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon
+              name="notifications-outline"
+              size={22}
+              color="#fff"
+              style={styles.bellIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{uri: profile.user.photo}}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>{profile.user.firstname}</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>
+                {classDetail && classDetail.semester && classDetail.division
+                  ? `${classDetail.semester} - ${classDetail.division}`
+                  : ''}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        <View style={styles.totalbox}>
+          <View style={styles.textbox1}>
+            <Text style={styles.text1}>Today Class Period</Text>
+            <Text style={styles.text2}>({currentDate})</Text>
+          </View>
+          <View style={styles.textbox2}>
+            <Text style={styles.text1}>Time Table</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            {todayTimetable.map((item, index) => (
+              <ClassPeriod
+                key={index}
+                periodName={item.subject}
+                time={`${item.from_time} to ${item.to_time}`}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <FlatList
+            data={menuarry}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+            scrollEnabled={false}
+          />
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={require('../../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        </ScrollView>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={false}
+        onRequestClose={toggleModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalContainer}
+          onPress={toggleModal}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+              <Icon name="close" size={30} color="#000" />
+            </TouchableOpacity>
+            <View style={styles.profileSection}>
+              <Image
+                style={styles.modalProfileImage}
+                source={{uri: profile.user.photo}}
+              />
+              <Text style={styles.profileName}>{profile.user.firstname}</Text>
+              <TouchableOpacity>
+                <Text style={styles.viewProfile}>View Profile</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.line}></Text>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              style={styles.modalItemsContainer}>
+              {menuarry.map((item, index) => (
+                <TouchableOpacity>
+                  <View key={index} style={styles.menuItem}>
+                    <Image
+                      source={getIcon(item.modulename)}
+                      style={styles.menuItemIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.modulename}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={styles.button} onPress={handleLogout}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.buttonText}>LOGOUT</Text>
+                <Icon name="log-out-outline" size={24} color="#fff" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 5,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // marginBottom: 70,
+    left: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 20,
+    bottom: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 18,
+    bottom: 14,
+    right: 10,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    bottom: 14,
+    right: 10,
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 80,
+    bottom: 14,
+    right: 10,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 10,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  row: {
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  modalContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    bottom: 10,
+    left: 10,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#344968',
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    top: -18,
+    color: '#344968',
+  },
+  viewProfile: {
+    color: 'black',
+    top: 10,
+    right: 144,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  line: {
+    width: '95%',
+    color: 'gray',
+    height: 3,
+    top: 0,
+    borderBottomWidth: 1,
+    borderColor: 'gray',
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 20,
+    marginHorizontal: 10,
+  },
+  menuItemIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 5,
+  },
+  menuItemText: {
+    fontSize: 15,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: '#344968',
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    width: 103,
+    height: 89,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#092085',
+    top: 7,
+    left: -5,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginBottom: 10,
+  },
+  label: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#344968',
+    height: 30,
+    width: '38%',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 6,
+    bottom: -10,
+    // Android shadow
+    elevation: 5,
+    marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+});
+
+export default MainScreen;
+
+
+
+// Principal Dasboard Page Here...
+
+
+import React from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, StatusBar, ScrollView } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const MainScreen = ({ navigation }) => {
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#3fa043" barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <Icon name="menu" size={30} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <Icon name="bell" size={30} color="#fff" />
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            source={{ uri: 'https://via.placeholder.com/150' }} // Replace with actual image URL
+            style={styles.profileImage}
+          />
+          <Text style={styles.welcomeText}>Welcome</Text>
+          <Text style={styles.userName}>DR. PRADOSH P</Text>
+          <Text style={styles.userRole}>Academic & Principal</Text>
+        </View>
+        <View style={styles.tabs}>
+          <TouchableOpacity style={styles.tabButton}>
+            <Text style={styles.tabText}>DASHBOARD</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.tabButton}>
+            <Text style={styles.tabText}>MAIN MENU</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.attendanceChart}>
+          <Text style={styles.attendanceTitle}>Attendance Chart</Text>
+          <View style={styles.legend}>
+            <Text style={styles.legendItem}><View style={[styles.legendColor, { backgroundColor: 'green' }]} /> Completed</Text>
+            <Text style={styles.legendItem}><View style={[styles.legendColor, { backgroundColor: 'red' }]} /> Not Marked</Text>
+          </View>
+          <View style={styles.chart}>
+            {/* Render the attendance chart here, for simplicity it's just text */}
+            <Text>Attendance Data Here</Text>
+          </View>
+        </View>
+        <View style={styles.infoBoxes}>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoTitle}>STUDENT</Text>
+            <Text style={styles.infoText}>Present: 26</Text>
+            <Text style={styles.infoText}>Strength: 206</Text>
+          </View>
+          <View style={styles.infoBox}>
+            <Text style={styles.infoTitle}>STAFF</Text>
+            <Text style={styles.infoText}>Present: 37</Text>
+            <Text style={styles.infoText}>Total: 39</Text>
+          </View>
+        </View>
+        <View style={styles.buttons}>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>ENQUIRY</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button}>
+            <Text style={styles.buttonText}>ADMISSION</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+  },
+  header: {
+    width: '100%',
+    backgroundColor: '#3fa043',
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  profileContainer: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: '#3fa043',
+  },
+  welcomeText: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3fa043',
+  },
+  userName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#3fa043',
+  },
+  userRole: {
+    fontSize: 16,
+    color: '#3fa043',
+  },
+  tabs: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 20,
+    width: '100%',
+  },
+  tabButton: {
+    padding: 10,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3fa043',
+  },
+  attendanceChart: {
+    width: '90%',
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  attendanceTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#3fa043',
+  },
+  legend: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 10,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  legendColor: {
+    width: 20,
+    height: 20,
+    marginRight: 5,
+  },
+  chart: {
+    width: '100%',
+    marginTop: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#3fa043',
+    borderRadius: 5,
+  },
+  infoBoxes: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20,
+  },
+  infoBox: {
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#3fa043',
+    borderRadius: 5,
+    width: '40%',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3fa043',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#3fa043',
+  },
+  buttons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  button: {
+    alignItems: 'center',
+    padding: 15,
+    backgroundColor: '#3fa043',
+    borderRadius: 5,
+    width: '40%',
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+});
+
+export default MainScreen;
+
+
+
+// Principal Dasboard Page Above.....X.....
+
+
+// Principal Dasboard Update Code Page  Below...!
+
+
+
+
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Dashboard = () => {
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [sectionsData, setSectionsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          'http://Schoolapi.netcampus.in/api/app/GetPrnsDashboard?token=1&Flag=PD&Userid&frm_Date=23-01-2024&to_Date&ay_id=',
+        );
+        const result = await response.json();
+        console.log('result', result);
+
+        setAttendanceData(result.table1);
+        setSectionsData(result.table0);
+
+        // Store data in AsyncStorage
+        await AsyncStorage.setItem(
+          'attendanceData',
+          JSON.stringify(result.table1),
+        );
+        await AsyncStorage.setItem(
+          'sectionsData',
+          JSON.stringify(result.table0),
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  const groupedData = attendanceData.reduce((acc, curr) => {
+    const existingClass = acc.find(item => item.std === curr.class_name);
+    if (existingClass) {
+      existingClass.sections.push({
+        section: curr.div_name,
+        p_value: parseInt(curr.p, 10),
+        a_value: parseInt(curr.a, 10),
+        count: parseInt(curr.count, 10),
+      });
+    } else {
+      acc.push({
+        std: curr.class_name,
+        sections: [
+          {
+            section: curr.div_name,
+            p_value: parseInt(curr.p, 10),
+            a_value: parseInt(curr.a, 10),
+            count: parseInt(curr.count, 10),
+          },
+        ],
+      });
+    }
+    return acc;
+  }, []);
+
+  const sections = [
+    {key: 'student', label: 'STUDENT', backgroundColor: '#0d1133'},
+    {key: 'staff', label: 'STAFF', backgroundColor: '#28349c'},
+    {key: 'enquiry', label: 'ENQUIRY', backgroundColor: '#d14160'},
+    {key: 'admission', label: 'ADMISSION', backgroundColor: '#5c5c0c'},
+    {key: 'feeCollection', label: 'FEE COLLECTION', backgroundColor: '#535ef5'},
+    {key: 'outstanding', label: 'OUTSTANDING', backgroundColor: '#cc0202'},
+    {key: 'transport', label: 'TRANSPORT', backgroundColor: '#ff9e03'},
+  ];
+
+  return (
+    <ScrollView style={styles.container}>
+      <AttendanceChart attendanceData={groupedData} />
+      <View style={styles.sectionContainer}>
+        <View style={styles.rowContainer}>
+          {sections.slice(0, 2).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 1}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.rowContainer}>
+          {sections.slice(2, 4).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 3}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.rowContainer}>
+          {sections.slice(4, 6).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 5}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.view3}>
+          <TouchableOpacity>
+            <Text
+              style={[
+                styles.text7,
+                {backgroundColor: sections[6].backgroundColor},
+              ]}>
+              {sections[6].label}
+            </Text>
+            <View style={styles.container1}>
+              <View style={styles.subcontainer}>
+                <Text style={styles.text8}>Present</Text>
+                <Text style={styles.text8}>Strength</Text>
+              </View>
+              <View style={styles.subcontainer1}>
+                <Text style={styles.text9}>0</Text>
+                <Text style={styles.text9}>200</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+const AttendanceChart = ({attendanceData}) => {
+  const getSectionColor = (count, p_value, a_value) => {
+    const sum = p_value + a_value;
+    if (count === sum) {
+      return styles.completed;
+    } else if (sum > 0) {
+      return styles.notMarked;
+    } else {
+      return styles.notStarted;
+    }
+  };
+
+  return (
+    <View style={styles.chartContainer}>
+      <Text style={styles.chartHeader}>Attendance Chart</Text>
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#008000'}]} />
+          <Text style={styles.legendText}>Completed</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#f5b642'}]} />
+          <Text style={styles.legendText}>Not Marked</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#FF0000'}]} />
+          <Text style={styles.legendText}>Not Started</Text>
+        </View>
+      </View>
+      <View style={styles.table}>
+        <View style={styles.row1}>
+          <Text style={styles.cell}>STD</Text>
+          <Text style={styles.cellHeader}>SECTION</Text>
+        </View>
+        {attendanceData.map((item, index) => (
+          <View key={index} style={styles.row}>
+            <Text style={styles.cell}>{item.std}</Text>
+            <View style={styles.sections}>
+              {item.sections.map((section, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.sectionCell,
+                    getSectionColor(
+                      section?.count,
+                      section?.p_value,
+                      section?.a_value,
+                    ),
+                  ]}>
+                  <Text style={styles.sectionText}>{section?.section}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#e8f2e6',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionContainer: {
+    paddingBottom: 20,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+  },
+  section: {
+    width: '45%',
+    marginVertical: 10,
+  },
+  text1: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text2: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text3: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text4: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text5: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text6: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text7: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text8: {
+    textAlign: 'center',
+    color: '#080808',
+  },
+  text9: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#080808',
+  },
+  container1: {
+    top: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  subcontainer: {
+    borderWidth: 1,
+    borderColor: '#dbd8e6',
+    backgroundColor: '#fff',
+    width: '50%',
+    padding: 11,
+    borderBottomLeftRadius: 5,
+  },
+  subcontainer1: {
+    borderWidth: 1,
+    borderColor: '#dbd8e6',
+    backgroundColor: '#fff',
+    width: '50%',
+    padding: 11,
+    borderBottomRightRadius: 5,
+  },
+  view3: {
+    top: 30,
+    width: '45%',
+    left: '27%',
+  },
+  chartContainer: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+  chartHeader: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  legend: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  legendColor: {
+    width: 16,
+    height: 16,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 14,
+  },
+  table: {
+    borderLeftWidth: 1,
+    borderTopWidth: 1,
+    borderColor: '#000000',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderRightWidth: 1,
+    // borderBottomWidth: 1,
+    height: 24,
+  },
+  row1: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    height: 30,
+  },
+  cellHeader: {
+    left: 110,
+  },
+  cell: {
+    borderColor: '#000000',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    textAlign: 'center',
+    width: 60,
+  },
+  sections: {
+    flex: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  sectionCell: {
+    width: '25%',
+    borderColor: '#000000',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    textAlign: 'center',
+    alignItems: 'center',
+    height: 24,
+  },
+  completed: {
+    backgroundColor: '#008000',
+  },
+  notMarked: {
+    backgroundColor: '#f5b642',
+  },
+  notStarted: {
+    backgroundColor: '#FF0000',
+  },
+  sectionText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+});
+
+export default Dashboard;
+
+
+// Principal Dasboard Update Code Page Above...!
+
+
+
+
+
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const Dashboard = () => {
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [sectionsData, setSectionsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          'http://Schoolapi.netcampus.in/api/app/GetPrnsDashboard?token=1&Flag=PD&Userid&frm_Date=23-01-2024&to_Date&ay_id=',
+        );
+        const result = await response.json();
+        console.log('result', result);
+
+        setAttendanceData(result.table1);
+        setSectionsData(result.table0);
+
+        // Store data in AsyncStorage
+        await AsyncStorage.setItem(
+          'attendanceData',
+          JSON.stringify(result.table1),
+        );
+        await AsyncStorage.setItem(
+          'sectionsData',
+          JSON.stringify(result.table0),
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  const groupedData = attendanceData.reduce((acc, curr) => {
+    const existingClass = acc.find(item => item.std === curr.class_name);
+    if (existingClass) {
+      existingClass.sections.push({
+        section: curr.div_name,
+        p_value: parseInt(curr.p, 10),
+        a_value: parseInt(curr.a, 10),
+        count: parseInt(curr.count, 10),
+      });
+    } else {
+      acc.push({
+        std: curr.class_name,
+        sections: [
+          {
+            section: curr.div_name,
+            p_value: parseInt(curr.p, 10),
+            a_value: parseInt(curr.a, 10),
+            count: parseInt(curr.count, 10),
+          },
+        ],
+      });
+    }
+    return acc;
+  }, []);
+
+  const sections = [
+    {key: 'student', label: 'STUDENT', backgroundColor: '#0d1133'},
+    {key: 'staff', label: 'STAFF', backgroundColor: '#28349c'},
+    {key: 'enquiry', label: 'ENQUIRY', backgroundColor: '#d14160'},
+    {key: 'admission', label: 'ADMISSION', backgroundColor: '#5c5c0c'},
+    {key: 'feeCollection', label: 'FEE COLLECTION', backgroundColor: '#535ef5'},
+    {key: 'outstanding', label: 'OUTSTANDING', backgroundColor: '#cc0202'},
+    {key: 'transport', label: 'TRANSPORT', backgroundColor: '#ff9e03'},
+  ];
+
+  return (
+    <ScrollView style={styles.container}>
+      <AttendanceChart attendanceData={groupedData} />
+      <View style={styles.sectionContainer}>
+        <View style={styles.rowContainer}>
+          {sections.slice(0, 2).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 1}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.rowContainer}>
+          {sections.slice(2, 4).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 3}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.rowContainer}>
+          {sections.slice(4, 6).map((section, index) => (
+            <TouchableOpacity style={styles.section} key={section.key}>
+              <Text
+                style={[
+                  styles[`text${index + 5}`],
+                  {backgroundColor: section.backgroundColor},
+                ]}>
+                {section.label}
+              </Text>
+              <View style={styles.container1}>
+                <View style={styles.subcontainer}>
+                  <Text style={styles.text8}>Present</Text>
+                  <Text style={styles.text8}>Strength</Text>
+                </View>
+                <View style={styles.subcontainer1}>
+                  <Text style={styles.text9}>0</Text>
+                  <Text style={styles.text9}>200</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.view3}>
+          <TouchableOpacity>
+            <Text
+              style={[
+                styles.text7,
+                {backgroundColor: sections[6].backgroundColor},
+              ]}>
+              {sections[6].label}
+            </Text>
+            <View style={styles.container1}>
+              <View style={styles.subcontainer}>
+                <Text style={styles.text8}>Present</Text>
+                <Text style={styles.text8}>Strength</Text>
+              </View>
+              <View style={styles.subcontainer1}>
+                <Text style={styles.text9}>0</Text>
+                <Text style={styles.text9}>200</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+const AttendanceChart = ({attendanceData}) => {
+  const getSectionColor = (count, p_value, a_value) => {
+    const sum = p_value + a_value;
+    if (count === sum) {
+      return styles.completed;
+    } else if (sum > 0) {
+      return styles.notMarked;
+    } else {
+      return styles.notStarted;
+    }
+  };
+
+  return (
+    <View style={styles.chartContainer}>
+      <Text style={styles.chartHeader}>Attendance Chart</Text>
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#008000'}]} />
+          <Text style={styles.legendText}>Completed</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#F1C40F'}]} />
+          <Text style={styles.legendText}>Not Marked</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendColor, {backgroundColor: '#FF0000'}]} />
+          <Text style={styles.legendText}>Not Started</Text>
+        </View>
+      </View>
+      <View style={styles.table}>
+        <View style={styles.row1}>
+          <Text style={styles.cell}>STD</Text>
+          <Text style={styles.cellHeader}>SECTION</Text>
+        </View>
+        {attendanceData.map((item, index) => (
+          <View key={index} style={styles.row}>
+            <Text style={styles.cell}>{item.std}</Text>
+            <View style={styles.sections}>
+              {item.sections.map((section, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.sectionCell,
+                    getSectionColor(
+                      section?.count,
+                      section?.p_value,
+                      section?.a_value,
+                    ),
+                  ]}>
+                  <Text style={styles.sectionText}>{section?.section}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#e8f2e6',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionContainer: {
+    marginBottom: 260,
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    width: '100%',
+  },
+  section: {
+    width: '45%',
+    marginVertical: 10,
+  },
+  text1: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text2: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text3: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text4: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text5: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text6: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text7: {
+    top: 20,
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    alignItems: 'center',
+    color: '#ffffff',
+    fontSize: 15,
+    textAlign: 'center',
+    padding: 5,
+  },
+  text8: {
+    textAlign: 'center',
+    color: '#080808',
+  },
+  text9: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#080808',
+  },
+  container1: {
+    top: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  subcontainer: {
+    borderWidth: 1,
+    borderColor: '#dbd8e6',
+    backgroundColor: '#fff',
+    width: '50%',
+    padding: 11,
+    borderBottomLeftRadius: 5,
+  },
+  subcontainer1: {
+    borderWidth: 1,
+    borderColor: '#dbd8e6',
+    backgroundColor: '#fff',
+    width: '50%',
+    padding: 11,
+    borderBottomRightRadius: 5,
+  },
+  view3: {
+    top: 30,
+    width: '45%',
+    left: '27%',
+  },
+  chartContainer: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+  },
+  chartHeader: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  legend: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  legendColor: {
+    width: 16,
+    height: 16,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 14,
+  },
+  table: {
+    borderLeftWidth: 1,
+    borderTopWidth: 1,
+    borderColor: '#000000',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderRightWidth: 1,
+    // borderBottomWidth: 1,
+    height: 24,
+  },
+  row1: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    height: 30,
+  },
+  cellHeader: {
+    left: 110,
+  },
+  cell: {
+    borderColor: '#000000',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    textAlign: 'center',
+    width: 60,
+  },
+  sections: {
+    flex: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  sectionCell: {
+    width: '25%',
+    borderColor: '#000000',
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    textAlign: 'center',
+    alignItems: 'center',
+    height: 24,
+  },
+  completed: {
+    backgroundColor: '#008000',
+  },
+  notMarked: {
+    backgroundColor: '#F1C40F',
+  },
+  notStarted: {
+    backgroundColor: '#FF0000',
+  },
+  sectionText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+});
+
+export default Dashboard;
