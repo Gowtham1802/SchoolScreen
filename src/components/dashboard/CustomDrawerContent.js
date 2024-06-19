@@ -16,7 +16,7 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {NavigationContainer} from '@react-navigation/native';
 import {createDrawerNavigator} from '@react-navigation/drawer';
-import HomeScreen from './HomeScreen';
+// import HomeScreen from './HomeScreen';
 
 const CustomDrawerContent = ({navigation, onClose}) => {
   const slideAnim = useRef(new Animated.Value(-300)).current; // Initial position of the drawer

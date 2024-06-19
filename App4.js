@@ -39,7 +39,7 @@ const App4 = () => {
             />
             <View style={styles.container3}>
               <Text style={styles.text2}>Welcome</Text>
-              <Text style={styles.text3}>DR. Gowtham T</Text>
+              <Text style={styles.text3}>DR. Pradosh</Text>
               <View>
                 <Text style={styles.text4}> Academic & Principal </Text>
               </View>

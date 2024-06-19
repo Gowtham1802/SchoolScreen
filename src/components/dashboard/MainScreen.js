@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -11,32 +11,47 @@ import {
   StatusBar,
   BackHandler,
   Alert,
-  Animated,
   RefreshControl,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {useNavigation} from '@react-navigation/native';
 import ClassPeriod from './ClassPeriod';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useSelector, useDispatch} from 'react-redux';
+import {
+  fetchProfile,
+  fetchTimetable,
+  fetchMenuarry,
+  logout,
+} from '../redux/authSlice'; // import your redux actions
 import * as Animatable from 'react-native-animatable';
 
 const MainScreen = () => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [timetable, setTimetable] = useState([]);
-  const [menuarry, setMenuarry] = useState([]);
+  const dispatch = useDispatch();
   const navigation = useNavigation();
 
-  const classData = [
-    {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
-    {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
-    {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
-    {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
-    {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
-    {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
-    {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
-  ];
+  const {
+    user,
+    profile,
+    timetable = [],
+    menuarry,
+    loading,
+    error,
+  } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+    dispatch(fetchTimetable());
+    dispatch(fetchMenuarry());
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true,
+    );
+
+    return () => backHandler.remove();
+  }, [dispatch]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -56,7 +71,8 @@ const MainScreen = () => {
           text: 'OK',
           onPress: async () => {
             try {
-              await AsyncStorage.clear();
+              dispatch(logout());
+              console.log('dispatch', dispatch);
               navigation.navigate('SignInScreen');
             } catch (error) {
               console.error('Error clearing async storage:', error);
@@ -68,99 +84,10 @@ const MainScreen = () => {
     );
   };
 
-  const fetchAsyncStorageValues = async () => {
-    try {
-      const tid = await AsyncStorage.getItem('tid');
-      const id = await AsyncStorage.getItem('id');
-      const rollId = await AsyncStorage.getItem('roll_id');
-      return {tid, id, rollId};
-    } catch (error) {
-      console.error('Error fetching AsyncStorage values:', error);
-      return {tid: null, id: null, rollId: null};
-    }
+  const handlePress = item => {
+    console.log('Item pressed:', item);
+    // Handle item press action here
   };
-
-  const fetchMenuarry = async () => {
-    try {
-      const {tid, id} = await fetchAsyncStorageValues();
-
-      const response = await fetch(
-        `http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=${tid}&User_id=${id}`,
-        {
-          method: 'POST',
-        },
-      );
-      const data = await response.json();
-
-      if (response.ok) {
-        setMenuarry(data.menuarry);
-      } else {
-        console.error('Error fetching data:');
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const fetchProfile = async () => {
-    try {
-      const {tid, id, rollId} = await fetchAsyncStorageValues();
-
-      if (!tid || !id || !rollId) {
-        console.error('tid, id, or roll_id is null');
-        return;
-      }
-
-      const response = await fetch(
-        `http://Schoolapi.netcampus.in/api/app/profile?token=${tid}^${id}^${rollId}`,
-      );
-
-      const text = await response.text();
-
-      if (response.ok) {
-        const result = JSON.parse(text);
-        setProfile(result);
-      } else {
-        console.error('Error fetching profile:', text);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const fetchtimetable = async () => {
-    try {
-      const {tid, id, rollId} = await fetchAsyncStorageValues();
-      const response = await fetch(
-        `http://Schoolapi.netcampus.in/api/app/mytimetable?token=${tid}^${id}^${rollId}`,
-      );
-      const text = await response.text();
-
-      if (response.ok) {
-        const result = JSON.parse(text);
-        setTimetable(result.data);
-      } else {
-        console.error('Error fetching timetable:', text);
-      }
-    } catch (error) {
-      console.error('Error fetching timetable:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchMenuarry();
-    fetchProfile();
-    fetchtimetable();
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        return true;
-      },
-    );
-
-    return () => backHandler.remove();
-  }, []);
 
   const renderItem = ({item}) => (
     <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
@@ -214,7 +141,6 @@ const MainScreen = () => {
     }
   };
 
-  // Function to get the current date and the day of the week
   const getCurrentDate = () => {
     const date = new Date();
     const dayOfWeek = date.getDay();
@@ -228,18 +154,20 @@ const MainScreen = () => {
   };
 
   const {currentDate, dayOfWeek} = getCurrentDate();
-
-  const todayTimetable = timetable.filter(
-    item => item.day_of_week === dayOfWeek,
-  );
+  const todayTimetable =
+    timetable && timetable.length > 0
+      ? timetable.filter(item => item.day_of_week === dayOfWeek)
+      : [];
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await getIcon();
+    dispatch(fetchProfile());
+    dispatch(fetchTimetable());
+    dispatch(fetchMenuarry());
     setRefreshing(false);
   };
 
-  if (!profile) {
+  if (loading || !profile) {
     return (
       <View style={styles.loadingContainer}>
         <Text>Loading...</Text>
@@ -324,6 +252,7 @@ const MainScreen = () => {
             numColumns={3}
             columnWrapperStyle={styles.row}
             scrollEnabled={false}
+            style={styles.box}
           />
           <View style={styles.footerContainer}>
             <View>
@@ -368,7 +297,6 @@ const MainScreen = () => {
               </View>
             </View>
             <Text style={styles.line}></Text>
-
             <FlatList
               data={menuarry}
               renderItem={({item, index}) => (
@@ -386,7 +314,6 @@ const MainScreen = () => {
               showsVerticalScrollIndicator={false}
               style={styles.modalItemsContainer}
             />
-
             <TouchableOpacity style={styles.button} onPress={handleLogout}>
               <View style={styles.iconContainer}>
                 <Text style={styles.buttonText}>LOGOUT</Text>
@@ -503,10 +430,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#CCE6FF',
     flex: 1,
     paddingHorizontal: 15,
+    // borderWidth: 5,
   },
-  row: {
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  box: {
+    // borderWidth: 5,
   },
   footerContainer: {
     width: '96%',
@@ -625,15 +552,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     margin: 10,
-    width: 103,
-    height: 89,
+    width: 105,
+    height: 100,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
     borderWidth: 2,
-    borderColor: '#092085',
+    borderBottomWidth: 7,
+    borderLeftWidth: 7,
+    // borderCurve: 5,
+    borderColor: '#1e3d59',
     top: 7,
     left: -5,
   },

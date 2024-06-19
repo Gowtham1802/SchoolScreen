@@ -10,7 +10,7 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://Schoolapi.netcampus.in/api/app/GetPrnsDashboard?token=1&Flag=PD&Userid&frm_Date=23-01-2024&to_Date&ay_id=');
+      const response = await fetch('https://Schoolapi.netcampus.in/api/app/GetPrnsDashboard?token=1&Flag=PD&Userid&frm_Date=23-01-2024&to_Date&ay_id=');
       const result = await response.json();
       console.log('result', result);
       
@@ -272,6 +272,8 @@ const styles = StyleSheet.create({
     color: '#080808',
   },
   text9: {
+    fontSize: 12,
+    top: 4,
     textAlign: 'center',
     fontWeight: 'bold',
     color: '#080808',

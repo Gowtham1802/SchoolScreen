@@ -17,7 +17,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
 import ScreenA from '../dashboard/ScreenA';
 import ScreenB from '../dashboard/ScreenB';
-import CustomDrawerContent from './CustomDrawerContent';
+// import CustomDrawerContent from './CustomDrawerContent';
 
 const Stack = createStackNavigator();
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, Button, StyleSheet} from 'react-native';
+import {View, Text, Button, StyleSheet, Alert} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useDispatch} from 'react-redux';
 import {postDeleted} from './postsSlice';
@@ -21,6 +21,7 @@ const PostsExcerpts = ({post}) => {
 
   const handleDelete = () => {
     dispatch(postDeleted({postId: post.id}));
+    Alert.alert('Post Deleted', 'The post has been successfully deleted.');
   };
 
   return (

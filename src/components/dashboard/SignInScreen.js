@@ -7,11 +7,15 @@ import {
   Image,
   StyleSheet,
   StatusBar,
-  ScrollView,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useDispatch, useSelector} from 'react-redux';
+import {loginUser, fetchProfile} from '../redux/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignInScreen = ({navigation}) => {
@@ -19,94 +23,13 @@ const SignInScreen = ({navigation}) => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [instituteCode, setInstituteCode] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handlePasswordChange = text => {
-    setPassword(text);
-  };
-
-  const handleLogin = async () => {
-    if (!instituteCode || !username || !password) {
-      Alert.alert('Incomplete fields', 'Please fill in all fields.');
-      return;
-    }
-
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append('token', instituteCode);
-    formData.append('uname', username);
-    formData.append('upwd', password);
-    formData.append('newversion', '1');
-
-    try {
-      const response = await fetch(
-        'http://schoolapi.netcampus.in/api/app/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          body: formData,
-        },
-      );
-
-      const responseText = await response.text();
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON Parse Error:', parseError);
-        Alert.alert(
-          'Error',
-          'Server returned invalid response. Please try again later.',
-        );
-        return;
-      }
-
-      if (result.user && navigation) {
-        try {
-          await AsyncStorage.setItem('tid', result?.tenant?.tid.toString());
-          await AsyncStorage.setItem('id', result?.user?.id.toString());
-          await AsyncStorage.setItem(
-            'roll_id',
-            result?.user?.role_id.toString(),
-          );
-          await AsyncStorage.setItem('userToken', result.user.id.toString());
-          setInstituteCode('');
-          setUsername('');
-          setPassword('');
-
-          console.log(result);
-
-          navigation.navigate('MainScreen', {
-            user: result.user,
-            tenant: result.tenant,
-            menuarry: result.menuarry,
-          });
-        } catch (error) {
-          console.error('Error storing user data:', error);
-        }
-      } else {
-        Alert.alert(
-          'Login failed',
-          result.error || 'Invalid credentials. Please check and try again.',
-        );
-      }
-    } catch (error) {
-      console.error('Login Error:', error);
-      Alert.alert('Error', 'Failed to login. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const dispatch = useDispatch();
+  const {loading, error, user, profile} = useSelector(state => state?.auth);
 
   useEffect(() => {
     const clearAsyncStorageAndRefresh = async () => {
       try {
         await AsyncStorage.clear();
-        // Force component re-render by changing state
         setInstituteCode('');
         setUsername('');
         setPassword('');
@@ -119,12 +42,44 @@ const SignInScreen = ({navigation}) => {
       'focus',
       clearAsyncStorageAndRefresh,
     );
-
     return unsubscribe;
   }, [navigation]);
 
+  const handleLogin = () => {
+    if (!instituteCode || !username || !password) {
+      Alert.alert('Incomplete fields', 'Please fill in all fields.');
+      return;
+    }
+    dispatch(loginUser({instituteCode, username, password}));
+  };
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Login failed', error);
+    }
+    if (user) {
+      dispatch(fetchProfile());
+    }
+  }, [error, user, dispatch]);
+
+  useEffect(() => {
+    if (profile && user) {
+      console.log('profile', profile);
+      if (profile.user.id === user.id) {
+        navigation.navigate('MainScreen');
+      } else {
+        Alert.alert(
+          'User mismatch',
+          'The user ID from profile does not match the logged in user.',
+        );
+      }
+    }
+  }, [profile, user, navigation]);
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <StatusBar backgroundColor="#003366" barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.background}>
@@ -140,55 +95,59 @@ const SignInScreen = ({navigation}) => {
               style={styles.logo1}
             />
           </View>
-
           <Text style={styles.signInText}>SIGN IN</Text>
-          <Text style={styles.subText}>Get started to avail more features</Text>
-
+          <Text style={styles.signInText2}>
+            Get started to avail more features
+          </Text>
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <Icon name="school" size={20} color="#003366" />
+              <Icon
+                name="school"
+                size={20}
+                color="#003366"
+                style={styles.icon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Institute Code"
-                placeholderTextColor="#003366"
                 value={instituteCode}
                 onChangeText={setInstituteCode}
+                keyboardType="numeric"
               />
             </View>
-
             <View style={styles.inputWrapper}>
-              <Icon name="account" size={20} color="#003366" />
+              <Icon
+                name="account"
+                size={20}
+                color="#003366"
+                style={styles.icon}
+              />
               <TextInput
                 style={styles.input}
-                placeholder="User Name"
-                placeholderTextColor="#003366"
+                placeholder="Username"
                 value={username}
                 onChangeText={setUsername}
               />
             </View>
-
             <View style={styles.inputWrapper}>
-              <Icon name="lock" size={20} color="#003366" />
+              <Icon name="lock" size={20} color="#003366" style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#003366"
-                secureTextEntry={!showPassword}
                 value={password}
-                onChangeText={handlePasswordChange}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                keyboardType="numeric"
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Text>
-                  <Icon
-                    name={showPassword ? 'eye' : 'eye-off'}
-                    size={20}
-                    color="#003366"
-                  />
-                </Text>
+                <Icon
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#003366"
+                />
               </TouchableOpacity>
             </View>
           </View>
-
           <TouchableOpacity
             style={styles.loginButton}
             onPress={handleLogin}
@@ -201,7 +160,7 @@ const SignInScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -221,11 +180,9 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    // marginBottom: 20,
   },
   logoContainer1: {
     alignItems: 'center',
-    // marginBottom: 20,
   },
   logo: {
     width: 300,
@@ -243,7 +200,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     top: 100,
   },
-  subText: {
+  signInText2: {
     fontSize: 17,
     fontWeight: 'bold',
     color: '#003366',
@@ -252,6 +209,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: '80%',
     top: 130,
+    // flexDirection: 'row',
   },
   inputWrapper: {
     flexDirection: 'row',

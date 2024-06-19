@@ -2,8 +2,9 @@
  * @format
  */
 
-import {AppRegistry} from 'react-native';
+import {NativeModules} from 'react-native';
 import 'react-native-gesture-handler';
+import {AppRegistry} from 'react-native';
 import App from './App';
 import App1 from './App1';
 import App2 from './App2';
@@ -17,11 +18,11 @@ import ModalScreen from './src/components/ModalScreen';
 import DrawerScreen from './src/components/Drawer';
 import {name as appName} from './app.json';
 
-// AppRegistry.registerComponent(appName, () => App);
+AppRegistry.registerComponent(appName, () => App);
 // AppRegistry.registerComponent(appName, () => App1);
 // AppRegistry.registerComponent(appName, () => App2);
 // AppRegistry.registerComponent(appName, () => App3);
-AppRegistry.registerComponent(appName, () => App4);
+// AppRegistry.registerComponent(appName, () => App4);
 // AppRegistry.registerComponent(appName, () => HomeScreen);
 // AppRegistry.registerComponent(appName, () => CalendarEvents);
 // AppRegistry.registerComponent(appName, () => SignInScreen);

@@ -15630,3 +15630,2605 @@ const styles = StyleSheet.create({
 });
 
 export default Dashboard;
+
+
+
+
+// .......X SignInScreen AsyncStorage Full Function Code Below X.......
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  StatusBar,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SignInScreen = ({navigation}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [instituteCode, setInstituteCode] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handlePasswordChange = text => {
+    setPassword(text);
+  };
+
+  const handleLogin = async () => {
+    if (!instituteCode || !username || !password) {
+      Alert.alert('Incomplete fields', 'Please fill in all fields.');
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append('token', instituteCode);
+    formData.append('uname', username);
+    formData.append('upwd', password);
+    formData.append('newversion', '1');
+
+    try {
+      const response = await fetch(
+        'http://schoolapi.netcampus.in/api/app/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formData,
+        },
+      );
+
+      const responseText = await response.text();
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError);
+        Alert.alert(
+          'Error',
+          'Server returned invalid response. Please try again later.',
+        );
+        return;
+      }
+
+      if (result.user && navigation) {
+        try {
+          await AsyncStorage.setItem('tid', result?.tenant?.tid.toString());
+          await AsyncStorage.setItem('id', result?.user?.id.toString());
+          await AsyncStorage.setItem(
+            'roll_id',
+            result?.user?.role_id.toString(),
+          );
+          await AsyncStorage.setItem('userToken', result.user.id.toString());
+          setInstituteCode('');
+          setUsername('');
+          setPassword('');
+
+          console.log(result);
+
+          navigation.navigate('MainScreen', {
+            user: result.user,
+            tenant: result.tenant,
+            menuarry: result.menuarry,
+          });
+        } catch (error) {
+          console.error('Error storing user data:', error);
+        }
+      } else {
+        Alert.alert(
+          'Login failed',
+          result.error || 'Invalid credentials. Please check and try again.',
+        );
+      }
+    } catch (error) {
+      console.error('Login Error:', error);
+      Alert.alert('Error', 'Failed to login. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const clearAsyncStorageAndRefresh = async () => {
+      try {
+        await AsyncStorage.clear();
+        // Force component re-render by changing state
+        setInstituteCode('');
+        setUsername('');
+        setPassword('');
+      } catch (error) {
+        console.error('Error clearing async storage:', error);
+      }
+    };
+
+    const unsubscribe = navigation.addListener(
+      'focus',
+      clearAsyncStorageAndRefresh,
+    );
+
+    return unsubscribe;
+  }, [navigation]);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#003366" barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.background}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../../assets/SignIn/signin2.jpeg')}
+              style={styles.logo}
+            />
+          </View>
+          <View style={styles.logoContainer1}>
+            <Image
+              source={require('../../../assets/SignIn/signin1.jpeg')}
+              style={styles.logo1}
+            />
+          </View>
+
+          <Text style={styles.signInText}>SIGN IN</Text>
+          <Text style={styles.subText}>Get started to avail more features</Text>
+
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Icon name="school" size={20} color="#003366" />
+              <TextInput
+                style={styles.input}
+                placeholder="Institute Code"
+                placeholderTextColor="#003366"
+                value={instituteCode}
+                onChangeText={setInstituteCode}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Icon name="account" size={20} color="#003366" />
+              <TextInput
+                style={styles.input}
+                placeholder="User Name"
+                placeholderTextColor="#003366"
+                value={username}
+                onChangeText={setUsername}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Icon name="lock" size={20} color="#003366" />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#003366"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={handlePasswordChange}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Text>
+                  <Icon
+                    name={showPassword ? 'eye' : 'eye-off'}
+                    size={20}
+                    color="#003366"
+                  />
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    // flexGrow: 1,
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
+  background: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    // marginBottom: 20,
+  },
+  logoContainer1: {
+    alignItems: 'center',
+    // marginBottom: 20,
+  },
+  logo: {
+    width: 300,
+    height: 60,
+    top: 40,
+  },
+  logo1: {
+    width: 360,
+    height: 260,
+    top: 90,
+  },
+  signInText: {
+    fontSize: 30,
+    color: '#003366',
+    fontWeight: 'bold',
+    top: 100,
+  },
+  subText: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#003366',
+    top: 110,
+  },
+  inputContainer: {
+    width: '80%',
+    top: 130,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#003366',
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    gap: 5,
+  },
+  input: {
+    flex: 1,
+    height: 45,
+    color: '#003366',
+  },
+  loginButton: {
+    backgroundColor: '#003366',
+    width: '80%',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 140,
+    marginBottom: 10,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default SignInScreen;
+
+// .......X SignInScreen AsyncStorage Full Function Code Above X.......
+
+
+
+// .......X MainScreen AsyncStorage Full Function Code Below X.......
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Alert,
+  Animated,
+  RefreshControl,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import DashboardItem from './DashboardItem';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [timetable, setTimetable] = useState([]);
+  const [menuarry, setMenuarry] = useState([]);
+  const navigation = useNavigation();
+
+  const classData = [
+    {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+    {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+    {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+    {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+    {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+    {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+    {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+  ];
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear();
+              navigation.navigate('SignInScreen');
+            } catch (error) {
+              console.error('Error clearing async storage:', error);
+            }
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const fetchAsyncStorageValues = async () => {
+    try {
+      const tid = await AsyncStorage.getItem('tid');
+      const id = await AsyncStorage.getItem('id');
+      const rollId = await AsyncStorage.getItem('roll_id');
+      return {tid, id, rollId};
+    } catch (error) {
+      console.error('Error fetching AsyncStorage values:', error);
+      return {tid: null, id: null, rollId: null};
+    }
+  };
+
+  const fetchMenuarry = async () => {
+    try {
+      const {tid, id} = await fetchAsyncStorageValues();
+
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=${tid}&User_id=${id}`,
+        {
+          method: 'POST',
+        },
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setMenuarry(data.menuarry);
+      } else {
+        console.error('Error fetching data:');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const {tid, id, rollId} = await fetchAsyncStorageValues();
+
+      if (!tid || !id || !rollId) {
+        console.error('tid, id, or roll_id is null');
+        return;
+      }
+
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/profile?token=${tid}^${id}^${rollId}`,
+      );
+
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        setProfile(result);
+      } else {
+        console.error('Error fetching profile:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const fetchtimetable = async () => {
+    try {
+      const {tid, id, rollId} = await fetchAsyncStorageValues();
+      const response = await fetch(
+        `http://Schoolapi.netcampus.in/api/app/mytimetable?token=${tid}^${id}^${rollId}`,
+      );
+      const text = await response.text();
+
+      if (response.ok) {
+        const result = JSON.parse(text);
+        setTimetable(result.data);
+      } else {
+        console.error('Error fetching timetable:', text);
+      }
+    } catch (error) {
+      console.error('Error fetching timetable:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMenuarry();
+    fetchProfile();
+    fetchtimetable();
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        return true;
+      },
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const handlePress = item => {
+    console.log('Item pressed:', item);
+    // Handle item press action here
+  };
+
+  const renderItem = ({item}) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
+      <TouchableOpacity style={styles.itemContainer}>
+        {/* <DashboardItem /> */}
+        <Image source={getIcon(item.modulename)} style={styles.icon} />
+        <Text style={styles.label}>{item.modulename}</Text>
+      </TouchableOpacity>
+    </Animatable.View>
+  );
+
+  const getIcon = modulename => {
+    switch (modulename) {
+      case 'Message':
+        return require('../../../assets/Box-Images/notification-bell.png');
+      case 'Attendance':
+        return require('../../../assets/Box-Images/attendance.png');
+      case 'Portfolio':
+        return require('../../../assets/Box-Images/portfolio.png');
+      case 'Homework':
+        return require('../../../assets/Box-Images/homework.png');
+      case 'Fees Payment':
+        return require('../../../assets/Box-Images/fees.png');
+      case 'Notes':
+        return require('../../../assets/Box-Images/notes.png');
+      case 'Diary / Events':
+        return require('../../../assets/Box-Images/diary.png');
+      case 'Time Table':
+        return require('../../../assets/Box-Images/timetable.png');
+      case 'Exam Marks':
+        return require('../../../assets/Box-Images/exammarks.png');
+      case 'Calendar Events':
+        return require('../../../assets/Box-Images/calendar.png');
+      case 'Meal Menu':
+        return require('../../../assets/Box-Images/mealmenu.png');
+      case 'Documents':
+        return require('../../../assets/Box-Images/documents.png');
+      case 'Chat':
+        return require('../../../assets/Box-Images/live-chat.png');
+      case 'Transport':
+        return require('../../../assets/Box-Images/transportation.png');
+      case 'Health Card':
+        return require('../../../assets/Box-Images/healthcard.png');
+      case 'My Learning':
+        return require('../../../assets/Box-Images/learning.png');
+      case 'Photo And Videos':
+        return require('../../../assets/Box-Images/photo&video.png');
+      case 'Leave Module':
+        return require('../../../assets/Box-Images/syllabus.png');
+      default:
+        return require('../../../assets/Box-Images/photo&video.png');
+    }
+  };
+
+  // Function to get the current date and the day of the week
+  const getCurrentDate = () => {
+    const date = new Date();
+    const dayOfWeek = date.getDay();
+    const dayOfMonth = date.getDate();
+    const month = date.toLocaleString('default', {month: 'long'});
+    const year = date.getFullYear();
+
+    const currentDate = `${dayOfMonth} ${month} ${year}`;
+
+    return {currentDate, dayOfWeek};
+  };
+
+  const {currentDate, dayOfWeek} = getCurrentDate();
+
+  const todayTimetable = timetable.filter(
+    item => item.day_of_week === dayOfWeek,
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await getIcon();
+    setRefreshing(false);
+  };
+
+  if (!profile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const classDetail = profile.classDetail;
+
+  return (
+    <View style={{flex: 1}}>
+      <StatusBar backgroundColor={'#00004F'} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon
+              name="notifications-outline"
+              size={22}
+              color="#fff"
+              style={styles.bellIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{uri: profile.user.photo}}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>{profile.user.firstname}</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>
+                {classDetail && classDetail.semester && classDetail.division
+                  ? `${classDetail.semester} - ${classDetail.division}`
+                  : ''}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        <View style={styles.totalbox}>
+          <View style={styles.textbox1}>
+            <Text style={styles.text1}>Today Class Period</Text>
+            <Text style={styles.text2}>({currentDate})</Text>
+          </View>
+          <View style={styles.textbox2}>
+            <Text style={styles.text1}>Time Table</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            {todayTimetable.map((item, index) => (
+              <ClassPeriod
+                key={index}
+                periodName={item.subject}
+                time={`${item.from_time} to ${item.to_time}`}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <FlatList
+            data={menuarry}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+            scrollEnabled={false}
+            style={styles.box}
+          />
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={require('../../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        </ScrollView>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={false}
+        onRequestClose={toggleModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalContainer}
+          onPress={toggleModal}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+              <Icon name="close" size={30} color="#000" />
+            </TouchableOpacity>
+            <View style={styles.profileSection}>
+              <View>
+                <Image
+                  style={styles.modalProfileImage}
+                  source={{uri: profile.user.photo}}
+                />
+              </View>
+              <View>
+                <Text style={styles.profileName}>{profile.user.firstname}</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewProfile}>View Profile</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Text style={styles.line}></Text>
+
+            <FlatList
+              data={menuarry}
+              renderItem={({item, index}) => (
+                <TouchableOpacity>
+                  <View key={index} style={styles.menuItem}>
+                    <Image
+                      source={getIcon(item.modulename)}
+                      style={styles.menuItemIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.modulename}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+              style={styles.modalItemsContainer}
+            />
+
+            <TouchableOpacity style={styles.button} onPress={handleLogout}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.buttonText}>LOGOUT</Text>
+                <Icon name="log-out-outline" size={24} color="#fff" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 8,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // marginBottom: 70,
+    left: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 20,
+    bottom: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 18,
+    bottom: 14,
+    right: 10,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    bottom: 14,
+    right: 10,
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 80,
+    bottom: 14,
+    right: 10,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 18,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+    // borderWidth: 5,
+  },
+  box: {
+    // borderWidth: 5,
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  modalContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    bottom: 10,
+    left: 10,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#344968',
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    // top: -18,
+    color: '#344968',
+  },
+  viewProfile: {
+    color: 'black',
+    // top: 10,
+    // right: 85,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  line: {
+    width: '95%',
+    color: 'gray',
+    height: 3,
+    top: 0,
+    borderBottomWidth: 1,
+    borderColor: 'gray',
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 20,
+    marginHorizontal: 10,
+  },
+  menuItemIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 5,
+  },
+  menuItemText: {
+    fontSize: 15,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: '#344968',
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    width: 105,
+    height: 100,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    borderWidth: 2,
+    borderBottomWidth: 7,
+    borderLeftWidth: 7,
+    // borderCurve: 5,
+    borderColor: '#1e3d59',
+    top: 7,
+    left: -5,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginBottom: 10,
+  },
+  label: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#344968',
+    height: 30,
+    width: '38%',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 6,
+    bottom: -10,
+    // Android shadow
+    elevation: 5,
+    marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+});
+
+export default MainScreen;
+
+// .......X MainScreen AsyncStorage Full Function Code Above X.......
+
+
+
+// SignInScreen Redux Method 
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  StatusBar,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useDispatch, useSelector} from 'react-redux';
+import {loginUser, fetchProfile} from '../redux/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SignInScreen = ({navigation}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [instituteCode, setInstituteCode] = useState('');
+  const dispatch = useDispatch();
+  const {loading, error, user, profile} = useSelector(state => state.auth);
+
+  useEffect(() => {
+    const clearAsyncStorageAndRefresh = async () => {
+      try {
+        await AsyncStorage.clear();
+        setInstituteCode('');
+        setUsername('');
+        setPassword('');
+      } catch (error) {
+        console.error('Error clearing async storage:', error);
+      }
+    };
+
+    const unsubscribe = navigation.addListener(
+      'focus',
+      clearAsyncStorageAndRefresh,
+    );
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleLogin = () => {
+    if (!instituteCode || !username || !password) {
+      Alert.alert('Incomplete fields', 'Please fill in all fields.');
+      return;
+    }
+    dispatch(loginUser({instituteCode, username, password}));
+  };
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Login failed', error);
+    }
+    if (user) {
+      dispatch(fetchProfile());
+    }
+  }, [error, user, dispatch]);
+
+  useEffect(() => {
+    if (profile && user) {
+      if (profile.user.id === user.id) {
+        navigation.navigate('MainScreen');
+      } else {
+        Alert.alert(
+          'User mismatch',
+          'The user ID from profile does not match the logged in user.',
+        );
+      }
+    }
+  }, [profile, user, navigation]);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StatusBar backgroundColor="#003366" barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.background}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../../assets/SignIn/signin2.jpeg')}
+              style={styles.logo}
+            />
+          </View>
+          <View style={styles.logoContainer1}>
+            <Image
+              source={require('../../../assets/SignIn/signin1.jpeg')}
+              style={styles.logo1}
+            />
+          </View>
+          <Text style={styles.signInText}>SIGN IN</Text>
+          <Text style={styles.signInText2}>To your account</Text>
+          <View style={styles.inputContainer}>
+            <Icon name="school" size={20} color="#003366" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Institute Code"
+              value={instituteCode}
+              onChangeText={setInstituteCode}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Icon
+              name="account"
+              size={20}
+              color="#003366"
+              style={styles.icon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Username"
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Icon name="lock" size={20} color="#003366" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Icon
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={20}
+                color="#003366"
+              />
+            </TouchableOpacity>
+          </View>
+          {loading ? (
+            <ActivityIndicator size="large" color="#003366" />
+          ) : (
+            <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  background: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+  },
+  logoContainer1: {
+    alignItems: 'center',
+  },
+  logo: {
+    width: 300,
+    height: 60,
+    top: 40,
+  },
+  logo1: {
+    width: 360,
+    height: 260,
+    top: 90,
+  },
+  signInText: {
+    fontSize: 30,
+    color: '#003366',
+    fontWeight: 'bold',
+    top: 100,
+  },
+  signInText2: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#003366',
+    top: 110,
+  },
+  inputContainer: {
+    width: '80%',
+    top: 130,
+    flexDirection: 'row',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#003366',
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    gap: 5,
+  },
+  input: {
+    flex: 1,
+    height: 45,
+    color: '#003366',
+  },
+  loginButton: {
+    backgroundColor: '#003366',
+    width: '80%',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 140,
+    marginBottom: 10,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default SignInScreen;
+
+
+// MainScreen Redux Method
+
+
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Alert,
+  RefreshControl,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import {useDispatch, useSelector} from 'react-redux';
+import {fetchProfile} from '../redux/profileSlice';
+import {fetchTimetable} from '../redux/timetableSlice';
+import {fetchMenuarry} from '../redux/menuarrySlice';
+import ClassPeriod from './ClassPeriod';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Animatable from 'react-native-animatable';
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+
+  const profile = useSelector(state => state.profile.profile);
+  const timetable = useSelector(state => state.timetable.timetable);
+  const menuarry = useSelector(state => state.menuarry.menuarry);
+  const profileStatus = useSelector(state => state.profile.status);
+  const timetableStatus = useSelector(state => state.timetable.status);
+  const menuarryStatus = useSelector(state => state.menuarry.status);
+
+  const classData = [
+    {id: '1', title1: '9:20Am to 10:00Am', title: 'English-th'},
+    {id: '2', title1: '10:00Am to 10:40Am', title: 'Language-th'},
+    {id: '4', title1: '11:30Am to 12:10Pm', title: 'Mathematics-th'},
+    {id: '5', title1: '12:40Pm to 1:20Pm', title: 'Chemistry-th'},
+    {id: '6', title1: '1:20Pm to 2:00Pm', title: 'Physics-th'},
+    {id: '7', title1: '2:10Pm to 2:50Pm', title: 'Biology-th'},
+    {id: '8', title1: '2:50Pm to 3:30Pm', title: 'Social Science-th'},
+  ];
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            await AsyncStorage.clear();
+            navigation.reset({
+              index: 0,
+              routes: [{name: 'SignInScreen'}],
+            });
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    dispatch(fetchProfile()).then(() => setRefreshing(false));
+    dispatch(fetchTimetable()).then(() => setRefreshing(false));
+    dispatch(fetchMenuarry()).then(() => setRefreshing(false));
+  };
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+    dispatch(fetchTimetable());
+    dispatch(fetchMenuarry());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert('Exit App', 'Are you sure you want to exit?', [
+        {
+          text: 'Cancel',
+          onPress: () => null,
+          style: 'cancel',
+        },
+        {
+          text: 'YES',
+          onPress: () => BackHandler.exitApp(),
+        },
+      ]);
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const renderItem = ({item}) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
+      <TouchableOpacity style={styles.menuItem}>
+        <Animatable.View animation="bounceIn" style={styles.iconContainer}>
+          <Icon name={item.icon} size={24} color="#fff" />
+        </Animatable.View>
+        <Text style={styles.menuText}>{item.menu_title}</Text>
+      </TouchableOpacity>
+    </Animatable.View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <StatusBar backgroundColor="#009387" barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }>
+        {profileStatus === 'loading' ||
+        timetableStatus === 'loading' ||
+        menuarryStatus === 'loading' ? (
+          <Text>Loading...</Text>
+        ) : (
+          <>
+            <View style={styles.header}>
+              <Image
+                source={{uri: profile?.profile_img}}
+                style={styles.profileImage}
+              />
+              <Text style={styles.welcomeText}>
+                Welcome, {profile?.student_name}
+              </Text>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={handleLogout}>
+                <Icon name="log-out-outline" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.classContainer}>
+              <FlatList
+                data={classData}
+                renderItem={({item}) => (
+                  <ClassPeriod title={item.title} title1={item.title1} />
+                )}
+                keyExtractor={item => item.id}
+              />
+            </View>
+
+            <View style={styles.menuContainer}>
+              {menuarry ? (
+                <FlatList
+                  data={menuarry}
+                  renderItem={renderItem}
+                  keyExtractor={(item, index) => index.toString()} // Ensure item.id is defined
+                  numColumns={4}
+                />
+              ) : (
+                <Text>No menu items found.</Text>
+              )}
+            </View>
+          </>
+        )}
+      </ScrollView>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.closeButton} onPress={toggleModal}>
+            <Icon name="close-outline" size={30} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Modal Content</Text>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  header: {
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    backgroundColor: '#009387',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  logoutButton: {
+    position: 'absolute',
+    right: 20,
+    top: 50,
+  },
+  menuContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    marginVertical: 20,
+  },
+  menuItem: {
+    width: '40%',
+    marginVertical: 10,
+    backgroundColor: '#009387',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+  },
+  iconContainer: {
+    marginBottom: 10,
+  },
+  menuText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  classContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default MainScreen;
+
+
+// Full Redux Function Codes 
+
+
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
+  StatusBar,
+  BackHandler,
+  Alert,
+  RefreshControl,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {useNavigation} from '@react-navigation/native';
+import ClassPeriod from './ClassPeriod';
+import {useSelector, useDispatch} from 'react-redux';
+import {
+  fetchProfile,
+  fetchTimetable,
+  fetchMenuarry,
+  logout,
+} from '../redux/authSlice'; // import your redux actions
+import * as Animatable from 'react-native-animatable';
+
+const MainScreen = () => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+
+  const {
+    user,
+    profile,
+    timetable = [],
+    menuarry,
+    loading,
+    error,
+  } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+    dispatch(fetchTimetable());
+    dispatch(fetchMenuarry());
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => true,
+    );
+
+    return () => backHandler.remove();
+  }, [dispatch]);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {
+          text: 'OK',
+          onPress: async () => {
+            try {
+              dispatch(logout());
+              console.log('dispatch', dispatch);
+              navigation.navigate('SignInScreen');
+            } catch (error) {
+              console.error('Error clearing async storage:', error);
+            }
+          },
+        },
+      ],
+      {cancelable: false},
+    );
+  };
+
+  const handlePress = item => {
+    console.log('Item pressed:', item);
+    // Handle item press action here
+  };
+
+  const renderItem = ({item}) => (
+    <Animatable.View animation="fadeInUp" duration={1500} delay={500}>
+      <TouchableOpacity style={styles.itemContainer}>
+        <Image source={getIcon(item.modulename)} style={styles.icon} />
+        <Text style={styles.label}>{item.modulename}</Text>
+      </TouchableOpacity>
+    </Animatable.View>
+  );
+
+  const getIcon = modulename => {
+    switch (modulename) {
+      case 'Message':
+        return require('../../../assets/Box-Images/notification-bell.png');
+      case 'Attendance':
+        return require('../../../assets/Box-Images/attendance.png');
+      case 'Portfolio':
+        return require('../../../assets/Box-Images/portfolio.png');
+      case 'Homework':
+        return require('../../../assets/Box-Images/homework.png');
+      case 'Fees Payment':
+        return require('../../../assets/Box-Images/fees.png');
+      case 'Notes':
+        return require('../../../assets/Box-Images/notes.png');
+      case 'Diary / Events':
+        return require('../../../assets/Box-Images/diary.png');
+      case 'Time Table':
+        return require('../../../assets/Box-Images/timetable.png');
+      case 'Exam Marks':
+        return require('../../../assets/Box-Images/exammarks.png');
+      case 'Calendar Events':
+        return require('../../../assets/Box-Images/calendar.png');
+      case 'Meal Menu':
+        return require('../../../assets/Box-Images/mealmenu.png');
+      case 'Documents':
+        return require('../../../assets/Box-Images/documents.png');
+      case 'Chat':
+        return require('../../../assets/Box-Images/live-chat.png');
+      case 'Transport':
+        return require('../../../assets/Box-Images/transportation.png');
+      case 'Health Card':
+        return require('../../../assets/Box-Images/healthcard.png');
+      case 'My Learning':
+        return require('../../../assets/Box-Images/learning.png');
+      case 'Photo And Videos':
+        return require('../../../assets/Box-Images/photo&video.png');
+      case 'Leave Module':
+        return require('../../../assets/Box-Images/syllabus.png');
+      default:
+        return require('../../../assets/Box-Images/photo&video.png');
+    }
+  };
+
+  const getCurrentDate = () => {
+    const date = new Date();
+    const dayOfWeek = date.getDay();
+    const dayOfMonth = date.getDate();
+    const month = date.toLocaleString('default', {month: 'long'});
+    const year = date.getFullYear();
+
+    const currentDate = `${dayOfMonth} ${month} ${year}`;
+
+    return {currentDate, dayOfWeek};
+  };
+
+  const {currentDate, dayOfWeek} = getCurrentDate();
+  const todayTimetable =
+    timetable && timetable.length > 0
+      ? timetable.filter(item => item.day_of_week === dayOfWeek)
+      : [];
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    dispatch(fetchProfile());
+    dispatch(fetchTimetable());
+    dispatch(fetchMenuarry());
+    setRefreshing(false);
+  };
+
+  if (loading || !profile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  const classDetail = profile.classDetail;
+
+  return (
+    <View style={{flex: 1}}>
+      <StatusBar backgroundColor={'#00004F'} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={toggleModal}>
+            <Icon name="menu" size={22} color="#fff" style={styles.menuIcon} />
+          </TouchableOpacity>
+          <Text style={styles.schoolName}>SMT SCHOOL</Text>
+          <TouchableOpacity>
+            <Icon
+              name="notifications-outline"
+              size={22}
+              color="#fff"
+              style={styles.bellIcon}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{uri: profile.user.photo}}
+            resizeMode="contain"
+          />
+          <View>
+            <Text style={styles.welcomeText}>Welcome</Text>
+            <Text style={styles.userName}>{profile.user.firstname}</Text>
+            <View style={styles.classContainer}>
+              <Text style={styles.classText}>
+                {classDetail && classDetail.semester && classDetail.division
+                  ? `${classDetail.semester} - ${classDetail.division}`
+                  : ''}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+      <View style={styles.classPeriodsContainer}>
+        <View style={styles.totalbox}>
+          <View style={styles.textbox1}>
+            <Text style={styles.text1}>Today Class Period</Text>
+            <Text style={styles.text2}>({currentDate})</Text>
+          </View>
+          <View style={styles.textbox2}>
+            <Text style={styles.text1}>Time Table</Text>
+          </View>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scrollView}>
+          <View style={styles.periodsRow}>
+            {todayTimetable.map((item, index) => (
+              <ClassPeriod
+                key={index}
+                periodName={item.subject}
+                time={`${item.from_time} to ${item.to_time}`}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+      <View style={styles.dashboardContainer}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          <FlatList
+            data={menuarry}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => index.toString()}
+            numColumns={3}
+            columnWrapperStyle={styles.row}
+            scrollEnabled={false}
+            style={styles.box}
+          />
+          <View style={styles.footerContainer}>
+            <View>
+              <Text style={styles.footerTitle}>Start Online Class</Text>
+              <TouchableOpacity style={styles.footerButton}>
+                <Text style={styles.footerButtonText}>Continue</Text>
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={require('../../../assets/onlineclass.png')}
+              style={styles.footerImage}
+            />
+          </View>
+        </ScrollView>
+      </View>
+
+      <Modal
+        visible={isModalVisible}
+        animationType="none"
+        transparent={false}
+        onRequestClose={toggleModal}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.modalContainer}
+          onPress={toggleModal}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={toggleModal} style={styles.closeButton}>
+              <Icon name="close" size={30} color="#000" />
+            </TouchableOpacity>
+            <View style={styles.profileSection}>
+              <View>
+                <Image
+                  style={styles.modalProfileImage}
+                  source={{uri: profile.user.photo}}
+                />
+              </View>
+              <View>
+                <Text style={styles.profileName}>{profile.user.firstname}</Text>
+                <TouchableOpacity>
+                  <Text style={styles.viewProfile}>View Profile</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Text style={styles.line}></Text>
+            <FlatList
+              data={menuarry}
+              renderItem={({item, index}) => (
+                <TouchableOpacity>
+                  <View key={index} style={styles.menuItem}>
+                    <Image
+                      source={getIcon(item.modulename)}
+                      style={styles.menuItemIcon}
+                    />
+                    <Text style={styles.menuItemText}>{item.modulename}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+              style={styles.modalItemsContainer}
+            />
+            <TouchableOpacity
+              style={styles.logoutSection}
+              onPress={handleLogout}>
+              <View style={styles.logoutContent}>
+                <Icon name="log-out-outline" size={30} color="red" />
+                <Text style={styles.logoutText}>Logout</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    height: 181,
+    backgroundColor: '#00004F',
+    padding: 10,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+    top: 10,
+  },
+  menuIcon: {
+    marginLeft: 8,
+  },
+  schoolName: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  bellIcon: {
+    marginRight: 10,
+  },
+  profileContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // marginBottom: 70,
+    left: 10,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 20,
+    bottom: 10,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  welcomeText: {
+    color: '#fff',
+    fontSize: 18,
+    bottom: 14,
+    right: 10,
+  },
+  userName: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    bottom: 14,
+    right: 10,
+  },
+  classContainer: {
+    backgroundColor: '#F1C40F',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginTop: 5,
+    alignItems: 'center',
+    width: 80,
+    bottom: 14,
+    right: 10,
+  },
+  totalbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  textbox1: {
+    flexDirection: 'row',
+    marginLeft: 18,
+  },
+  textbox2: {
+    marginRight: 10,
+  },
+  text1: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  text2: {
+    color: 'gray',
+  },
+  classText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  classPeriodsContainer: {
+    height: 90,
+  },
+  scrollView: {
+    height: 100,
+  },
+  periodsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    paddingHorizontal: 10,
+  },
+  dashboardContainer: {
+    marginTop: 10,
+    backgroundColor: '#CCE6FF',
+    flex: 1,
+    paddingHorizontal: 15,
+    // borderWidth: 5,
+  },
+  box: {
+    // borderWidth: 5,
+  },
+  footerContainer: {
+    width: '96%',
+    height: 100,
+    left: -24,
+    backgroundColor: 'white',
+    margin: 30,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    borderRadius: 8,
+    elevation: 5,
+    bottom: 4,
+  },
+  footerTitle: {
+    fontSize: 18,
+    color: '#00004F',
+  },
+  footerButton: {
+    width: 90,
+    backgroundColor: '#516f9c',
+    padding: 5,
+    borderRadius: 5,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  footerButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  footerImage: {
+    width: 120,
+    height: 100,
+  },
+  modalContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '100%',
+    padding: 20,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    bottom: 10,
+    left: 10,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalProfileImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#344968',
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    // top: -18,
+    color: '#344968',
+  },
+  viewProfile: {
+    color: 'black',
+    // top: 10,
+    // right: 85,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  line: {
+    width: '95%',
+    color: 'gray',
+    height: 3,
+    top: 0,
+    borderBottomWidth: 1,
+    borderColor: 'gray',
+  },
+  modalItemsContainer: {
+    marginTop: 20,
+    maxHeight: '80%',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 20,
+    marginHorizontal: 10,
+  },
+  menuItemIcon: {
+    width: 30,
+    height: 30,
+    marginBottom: 5,
+  },
+  menuItemText: {
+    fontSize: 15,
+    color: 'black',
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: '#344968',
+  },
+  itemContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 10,
+    width: 105,
+    height: 100,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+    borderWidth: 2,
+    borderBottomWidth: 7,
+    borderLeftWidth: 7,
+    // borderCurve: 5,
+    borderColor: '#1e3d59',
+    top: 7,
+    left: -5,
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginBottom: 10,
+  },
+  label: {
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#344968',
+    height: 30,
+    width: '38%',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 6,
+    bottom: -10,
+    // Android shadow
+    elevation: 5,
+    marginLeft: 10,
+  },
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+    marginLeft: 10,
+  },
+});
+
+export default MainScreen;
+
+
+
+
+import React, {useState, useEffect} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  StatusBar,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {useDispatch, useSelector} from 'react-redux';
+import {loginUser, fetchProfile} from '../redux/authSlice';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const SignInScreen = ({navigation}) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
+  const [instituteCode, setInstituteCode] = useState('');
+  const dispatch = useDispatch();
+  const {loading, error, user, profile} = useSelector(state => state.auth);
+
+  useEffect(() => {
+    const clearAsyncStorageAndRefresh = async () => {
+      try {
+        await AsyncStorage.clear();
+        setInstituteCode('');
+        setUsername('');
+        setPassword('');
+      } catch (error) {
+        console.error('Error clearing async storage:', error);
+      }
+    };
+
+    const unsubscribe = navigation.addListener(
+      'focus',
+      clearAsyncStorageAndRefresh,
+    );
+    return unsubscribe;
+  }, [navigation]);
+
+  const handleLogin = () => {
+    if (!instituteCode || !username || !password) {
+      Alert.alert('Incomplete fields', 'Please fill in all fields.');
+      return;
+    }
+    dispatch(loginUser({instituteCode, username, password}));
+  };
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('Login failed', error);
+    }
+    if (user) {
+      dispatch(fetchProfile());
+    }
+  }, [error, user, dispatch]);
+
+  useEffect(() => {
+    if (profile && user) {
+      console.log('profile', profile);
+      if (profile.user.id === user.id) {
+      navigation.navigate('MainScreen');
+      } else {
+        Alert.alert(
+          'User mismatch',
+          'The user ID from profile does not match the logged in user.',
+        );
+      }
+    }
+  }, [profile, user, navigation]);
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <StatusBar backgroundColor="#003366" barStyle="light-content" />
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.background}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('../../../assets/SignIn/signin2.jpeg')}
+              style={styles.logo}
+            />
+          </View>
+          <View style={styles.logoContainer1}>
+            <Image
+              source={require('../../../assets/SignIn/signin1.jpeg')}
+              style={styles.logo1}
+            />
+          </View>
+          <Text style={styles.signInText}>SIGN IN</Text>
+          <Text style={styles.signInText2}>
+            Get started to avail more features
+          </Text>
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Icon
+                name="school"
+                size={20}
+                color="#003366"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Institute Code"
+                value={instituteCode}
+                onChangeText={setInstituteCode}
+              />
+            </View>
+            <View style={styles.inputWrapper}>
+              <Icon
+                name="account"
+                size={20}
+                color="#003366"
+                style={styles.icon}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={username}
+                onChangeText={setUsername}
+              />
+            </View>
+            <View style={styles.inputWrapper}>
+              <Icon name="lock" size={20} color="#003366" style={styles.icon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Icon
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#003366"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>LOGIN</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scrollContainer: {
+    // flexGrow: 1,
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
+  background: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+  },
+  logoContainer1: {
+    alignItems: 'center',
+  },
+  logo: {
+    width: 300,
+    height: 60,
+    top: 40,
+  },
+  logo1: {
+    width: 360,
+    height: 260,
+    top: 90,
+  },
+  signInText: {
+    fontSize: 30,
+    color: '#003366',
+    fontWeight: 'bold',
+    top: 100,
+  },
+  signInText2: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#003366',
+    top: 110,
+  },
+  inputContainer: {
+    width: '80%',
+    top: 130,
+    // flexDirection: 'row',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#003366',
+    borderRadius: 5,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    gap: 5,
+  },
+  input: {
+    flex: 1,
+    height: 45,
+    color: '#003366',
+  },
+  loginButton: {
+    backgroundColor: '#003366',
+    width: '80%',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 140,
+    marginBottom: 10,
+    elevation: 5,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default SignInScreen;
+
+
+
+
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Utility function to fetch values from AsyncStorage
+const fetchAsyncStorageValues = async keys => {
+  try {
+    const values = await Promise.all(
+      keys.map(key => AsyncStorage.getItem(key)),
+    );
+    return Object.fromEntries(keys.map((key, index) => [key, values[index]]));
+  } catch (error) {
+    console.error('Error fetching AsyncStorage values:', error);
+    return Object.fromEntries(keys.map(key => [key, null]));
+  }
+};
+
+// Async thunk for login
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async ({instituteCode, username, password}, {rejectWithValue}) => {
+    const formData = new FormData();
+    formData.append('token', instituteCode);
+    formData.append('uname', username);
+    formData.append('upwd', password);
+    formData.append('newversion', '1');
+
+    try {
+      const response = await fetch(
+        'http://schoolapi.netcampus.in/api/app/login',
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'multipart/form-data'},
+          body: formData,
+        },
+      );
+
+      const data = await response.json();
+
+      if (data.user) {
+        await AsyncStorage.multiSet([
+          ['tid', data.tenant.tid.toString()],
+          ['id', data.user.id.toString()],
+          ['roll_id', data.user.role_id.toString()],
+          ['userToken', data.user.id.toString()],
+        ]);
+        return data;
+      } else {
+        return rejectWithValue(data.error || 'Invalid credentials');
+      }
+    } catch (error) {
+      return rejectWithValue('Failed to login. Please try again later.');
+    }
+  },
+);
+
+// Async thunk for fetching profile
+export const fetchProfile = createAsyncThunk(
+  'auth/fetchProfile',
+  async (_, {rejectWithValue}) => {
+    try {
+      const {tid, id, roll_id} = await fetchAsyncStorageValues([
+        'tid',
+        'id',
+        'roll_id',
+      ]);
+
+      const response = await fetch(
+        `http://schoolapi.netcampus.in/api/app/profile?token=${tid}^${id}^${roll_id}`,
+      );
+      const data = await response.json();
+
+      if (data) {
+        return data;
+      } else {
+        return rejectWithValue('Failed to fetch profile data');
+      }
+    } catch (error) {
+      return rejectWithValue('Failed to fetch profile data');
+    }
+  },
+);
+
+// Async thunk for fetching timetable
+export const fetchTimetable = createAsyncThunk(
+  'timetable/fetchTimetable',
+  async () => {
+    const {tid, id, roll_id} = await fetchAsyncStorageValues([
+      'tid',
+      'id',
+      'roll_id',
+    ]);
+    const response = await fetch(
+      `http://Schoolapi.netcampus.in/api/app/mytimetable?token=${tid}^${id}^${roll_id}`,
+    );
+    const result = await response.json();
+    return result.data;
+  },
+);
+
+// Async thunk for fetching menu array
+export const fetchMenuarry = createAsyncThunk(
+  'menuarry/fetchMenuarry',
+  async () => {
+    const {tid, id} = await fetchAsyncStorageValues(['tid', 'id']);
+    const response = await fetch(
+      `http://Schoolapi.netcampus.in/api/app/getAppmenuDetails?tid=${tid}&User_id=${id}`,
+      {
+        method: 'POST',
+      },
+    );
+    const result = await response.json();
+    return result.menuarry;
+  },
+);
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: {
+    user: null,
+    tenant: null,
+    menuarry: [],
+    isLoggedIn: false,
+    loading: false,
+    error: null,
+    profile: null,
+  },
+  reducers: {
+    logout: state => {
+      state.user = null;
+      state.tenant = null;
+      state.menuarry = [];
+      state.isLoggedIn = false;
+      state.profile = null;
+      AsyncStorage.clear();
+    },
+  },
+  extraReducers: builder => {
+    builder
+      .addCase(loginUser.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+        state.tenant = action.payload.tenant;
+        state.menuarry = action.payload.menuarry;
+        state.isLoggedIn = true;
+        state.loading = false;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchProfile.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProfile.fulfilled, (state, action) => {
+        state.profile = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchTimetable.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTimetable.fulfilled, (state, action) => {
+        state.timetable = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchTimetable.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchMenuarry.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMenuarry.fulfilled, (state, action) => {
+        state.menuarry = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchMenuarry.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
+});
+
+export const {logout} = authSlice.actions;
+export default authSlice.reducer;
+
+
+
+@Override
+protected void initializeFlipper(ReactInstanceManager reactInstanceManager) {
+  if (BuildConfig.DEBUG) {
+    try {
+      // ...
+      ReactInstanceManager.class.getDeclaredMethod("initializeFlipper", Context.class, ReactInstanceManager.class).invoke(null, this, reactInstanceManager);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+}
+
+// Add the following line to the existing `getJSIModulePackage` method
+@Override
+protected JSIModulePackage getJSIModulePackage() {
+  return new ReanimatedJSIModulePackage(); // <- add
+}
+
+
+-keep class com.swmansion.reanimated.** { *; }
+-dontwarn com.swmansion.reanimated.**
+
+
+classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
