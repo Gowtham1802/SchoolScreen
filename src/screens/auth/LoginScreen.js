@@ -10,8 +10,15 @@ import {
   ScrollView,
   SafeAreaView,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome5';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import {
+  horizontalScale,
+  verticalScale,
+  moderateScale,
+} from '../../utils/Metrics'; // Adjust the import path as needed
 
 const LoginScreen = ({navigation}) => {
   const [username, setUsername] = useState('');
@@ -24,17 +31,17 @@ const LoginScreen = ({navigation}) => {
     setTimeout(() => {
       setLoading(false);
       navigation.navigate('Main');
-    }, 2000); // 2-second loading period
+    }, 500);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar backgroundColor="#003366" barStyle="light-content" />
+      <StatusBar backgroundColor="#E43A45" barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.card}>
           <View style={styles.subContainer}>
             <Image
-              source={require('../../assets/images/Logo.png')} // Replace with your logo's URL or local file
+              source={require('../../assets/images/Logo.png')}
               style={styles.logo}
             />
             <Text style={styles.title}>SAARC CASES</Text>
@@ -42,7 +49,11 @@ const LoginScreen = ({navigation}) => {
           <Text style={styles.subtitle}>ERP LOGIN</Text>
           <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
-              <FontAwesomeIcon name="user" size={20} color="#003366" />
+              <FontAwesomeIcon
+                name="user"
+                size={horizontalScale(20)}
+                color="#E43A45"
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Username"
@@ -51,7 +62,11 @@ const LoginScreen = ({navigation}) => {
               />
             </View>
             <View style={styles.inputWrapper}>
-              <FontAwesomeIcon name="lock" size={20} color="#003366" />
+              <Icon
+                name="lock-outline"
+                size={horizontalScale(23)}
+                color="#E43A45"
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -63,8 +78,8 @@ const LoginScreen = ({navigation}) => {
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
                 <FontAwesomeIcon
                   name={showPassword ? 'eye-slash' : 'eye'}
-                  size={20}
-                  color="#003366"
+                  size={horizontalScale(19)}
+                  color="#E43A45"
                 />
               </TouchableOpacity>
             </View>
@@ -80,7 +95,7 @@ const LoginScreen = ({navigation}) => {
           <Text style={styles.footer}>Powered by</Text>
           <View>
             <Image
-              source={require('../../assets/images/net_logo.jpeg')} // Replace with your powered by logo's URL or local file
+              source={require('../../assets/images/net_logo.jpeg')}
               style={styles.poweredByLogo}
             />
           </View>
@@ -99,14 +114,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 26,
-    // backgroundColor: '#fff'
+    padding: horizontalScale(22),
   },
   card: {
     width: '90%',
     backgroundColor: '#F8F8F8',
     borderRadius: 10,
-    padding: 20,
+    padding: horizontalScale(18),
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
@@ -119,81 +133,80 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fafafa',
-    marginBottom: 16,
-    gap: 10,
+    marginBottom: verticalScale(16),
+    gap: horizontalScale(8),
   },
   logo: {
-    width: 58,
-    height: 55,
+    width: horizontalScale(56),
+    height: verticalScale(56),
   },
   title: {
-    fontSize: 28,
+    fontSize: horizontalScale(26),
+    fontFamily: 'Poppins-ExtraLight',
     fontWeight: 'bold',
     color: '#E43A45',
   },
   subtitle: {
-    fontSize: 22,
+    fontSize: horizontalScale(22),
     fontWeight: 'bold',
+    fontFamily: 'Poppins-Thin',
     color: '#313131',
-    marginBottom: 30,
-    // top: -25,
+    marginBottom: verticalScale(32),
   },
   inputContainer: {
     width: '100%',
-    gap: 20,
-    marginBottom: 20,
+    gap: verticalScale(16),
+    marginBottom: verticalScale(24),
   },
   input: {
     flex: 1,
-    height: 45,
+    height: verticalScale(48),
     color: '#003366',
-    fontSize: 16,
-    paddingHorizontal: 8,
+    fontSize: horizontalScale(14),
+    paddingHorizontal: horizontalScale(8),
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    // borderBottomWidth: 1,
     borderColor: '#A8A8A8',
     borderRadius: 5,
-    paddingHorizontal: 12,
-    gap: 5,
+    paddingHorizontal: horizontalScale(12),
+    gap: horizontalScale(8),
   },
   button: {
     width: '100%',
-    height: 40,
-    backgroundColor: '#2C5282',
+    height: verticalScale(44),
+    backgroundColor: '#E43A45',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 5,
-    marginBottom: 70,
-    top: 30,
+    marginBottom: verticalScale(72),
+    top: verticalScale(16),
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: horizontalScale(18),
   },
   line: {
     width: '80%',
     borderBottomWidth: 1,
     borderColor: '#A8A8A8',
-    // marginBottom: 20,
-    bottom: 20,
+    bottom: verticalScale(24),
   },
   footer: {
-    width: 120,
+    width: horizontalScale(110),
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: horizontalScale(14),
     color: '#A8A8A8',
     backgroundColor: '#fafafa',
-    marginBottom: 8,
-    top: -35,
+    marginBottom: verticalScale(8),
+    top: -verticalScale(40),
   },
   poweredByLogo: {
-    width: 152,
-    height: 30,
-    bottom: 20,
+    width: horizontalScale(157),
+    height: verticalScale(32),
+    bottom: verticalScale(24),
   },
 });
 

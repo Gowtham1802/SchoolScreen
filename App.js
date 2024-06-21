@@ -184,162 +184,154 @@
 //
 // export default App;
 
+// App.js
 import 'react-native-gesture-handler';
-import React, {useState} from 'react';
+import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
-import {
-  createDrawerNavigator,
-  DrawerContentScrollView,
-  DrawerItem,
-} from '@react-navigation/drawer';
-import {StyleSheet, View, Text, Modal, TouchableOpacity} from 'react-native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {WebView} from 'react-native-webview';
+import Animated from 'react-native-reanimated';
 
-// Import your screens
 import LoginScreen from './src/screens/auth/LoginScreen';
+import WelcomeScreen from './src/screens/welcome/WelcomeScreen';
+import AccountScreen from './src/screens/setting/AccountScreen';
+import {
+  horizontalScale,
+  verticalScale,
+  moderateScale,
+} from './src/utils/Metrics';
+import {ThemeProvider} from './src/utils/ThemeContext';
 
 const Stack = createStackNavigator();
-const Drawer = createDrawerNavigator();
+const Tab = createBottomTabNavigator();
+
+const HomeScreen = () => (
+  <WebView source={{uri: 'http://192.168.1.45:82/'}} style={{flex: 1}} />
+);
+
+const TrackingScreen = () => (
+  <View style={styles.container}>{/* Add your content here */}</View>
+);
+
+const ProfileScreen = () => <View style={styles.container}></View>;
+
+const SettingsScreen = () => (
+  <View style={styles.container}>
+    <AccountScreen />
+  </View>
+);
+
+const getTabBarIcon = (route, focused, color, size) => {
+  let iconName;
+  let scale = focused ? 1.3 : 0.9;
+
+  if (route.name === 'Home') {
+    iconName = 'home-outline';
+  } else if (route.name === 'Tracking') {
+    iconName = 'map-marker-outline';
+  } else if (route.name === 'Notification') {
+    iconName = 'bell-outline';
+  } else if (route.name === 'Settings') {
+    iconName = 'cog-outline';
+  }
+
+  return (
+    <Animated.View style={{transform: [{scale}]}}>
+      <Icons name={iconName} size={size} color={color} />
+    </Animated.View>
+  );
+};
 
 const DashboardScreen = () => {
   return (
-    <View style={styles.container}>
-      <WebView source={{uri: 'http://192.168.1.45:82/'}} />
-    </View>
-  );
-};
-
-const AnotherScreen = () => {
-  return (
-    <View style={styles.container}>
-      <Text>Another Screen</Text>
-    </View>
-  );
-};
-
-// Custom Drawer Content with Logout Confirmation Modal
-const CustomDrawerContent = ({navigation}) => {
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const handleLogout = () => {
-    setModalVisible(false);
-    navigation.replace('Login');
-  };
-
-  return (
-    <>
-      <DrawerContentScrollView>
-        <DrawerItem
-          label="Dashboard"
-          onPress={() => navigation.navigate('Dashboard')}
-        />
-        <DrawerItem
-          label="Another"
-          onPress={() => navigation.navigate('Another')}
-        />
-        <DrawerItem label="Logout" onPress={() => setModalVisible(true)} />
-      </DrawerContentScrollView>
-      <Modal
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Logout</Text>
-            <Text style={styles.modalMessage}>
-              Are you sure you want to logout?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={handleLogout}>
-                <Text style={styles.modalButtonText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-};
-
-const DrawerNavigator = () => {
-  return (
-    <Drawer.Navigator
-      initialRouteName="Dashboard"
-      drawerContent={props => <CustomDrawerContent {...props} />}>
-      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-      <Drawer.Screen name="Another" component={AnotherScreen} />
-    </Drawer.Navigator>
+    <Tab.Navigator
+      screenOptions={({route}) => ({
+        tabBarIcon: ({focused, color, size}) =>
+          getTabBarIcon(route, focused, color, size),
+        tabBarActiveTintColor: '#E43A45',
+        tabBarInactiveTintColor: 'gray',
+      })}>
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Tracking"
+        component={TrackingScreen}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Notification"
+        component={ProfileScreen}
+        options={{headerShown: false}}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          headerShown: true,
+          headerStyle: {backgroundColor: '#E43A45'},
+          headerTitleAlign: 'center',
+          headerTintColor: '#fff',
+          headerLeft: () => (
+            <TouchableOpacity>
+              <Icon
+                name="angle-left"
+                size={35}
+                color="#fff"
+                style={{marginLeft: 15}}
+              />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+    </Tab.Navigator>
   );
 };
 
 const App = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{headerShown: false}}
-        />
-        <Stack.Screen
-          name="Main"
-          component={DrawerNavigator}
-          options={{headerShown: false}}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Welcome">
+          <Stack.Screen
+            name="Welcome"
+            component={WelcomeScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Main"
+            component={DashboardScreen}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Account"
+            component={AccountScreen}
+            options={{headerShown: false}}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ThemeProvider>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: 300,
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalMessage: {
-    fontSize: 16,
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  modalButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  modalButtonText: {
-    fontSize: 16,
-    color: '#007BFF',
   },
 });
 
 export default App;
+
